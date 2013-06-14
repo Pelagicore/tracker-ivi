@@ -2354,6 +2354,25 @@ if test "x$enable_guarantee_metadata" != "xno"; then
   AC_DEFINE(GUARANTEE_METADATA, 1, [Guarantee existence of certain metadata])
 fi
 
+#####################################################################
+# Check for tracker-extract: Faster PNG extractor
+#####################################################################
+
+# Extracts metadata from tEXt and iTXt chunks found before and after IDAT
+# chunks Faster than tracker-extract-png since IDAT chunks are skipped.
+
+AC_ARG_ENABLE(png-faster,
+             AS_HELP_STRING([--enable-png-faster],
+                            [enable a faster PNG extractor [[default=no]]]),
+                            [enable_png_faster=yes],
+                            [enable_png_faster=no])
+
+if test "x$enable_png_faster" != "xno"; then
+  AC_DEFINE(HAVE_PNG_FASTER, 1, [Faster PNG extractor])
+fi
+
+AM_CONDITIONAL(HAVE_PNG_FASTER, test "x$enable_png_faster" = "xyes")
+
 ####################################################################
 # Check if we should use initctl or sysvinit
 ####################################################################
@@ -2578,6 +2597,7 @@ Metadata Extractors:
 
 	Support libstreamanalyzer:              $have_libstreamanalyzer
 	Support PNG:                            $have_libpng
+	Support faster PNG extraction:          $enable_png_faster
 	Support PDF:                            $have_poppler
 	Support XPS:                            $have_libgxps
 	Support GIF:                            $have_libgif (xmp: $have_exempi)
