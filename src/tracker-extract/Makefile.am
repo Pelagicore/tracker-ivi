@@ -20,6 +20,7 @@ rules_in_files = \
 	08-png-ivi.rule.in \
 	09-jpeg-ivi.rule.in \
 	09-mp3-ivi.rule.in \
+	09-png-faster.rule.in \
 	10-abw.rule.in \
 	10-dvi.rule.in \
 	10-epub.rule.in \
@@ -179,6 +180,11 @@ modules_LTLIBRARIES += libextract-icon.la
 rules_DATA += 10-ico.rule
 endif
 
+if HAVE_PNG_FASTER
+modules_LTLIBRARIES += libextract-png-faster.la
+rules_DATA += 09-png-faster.rule
+endif
+
 if HAVE_MP3_IVI
 modules_LTLIBRARIES += libextract-mp3-ivi.la
 rules_DATA += 09-mp3-ivi.rule
@@ -285,6 +291,17 @@ libextract_png_la_LIBADD = \
 	$(TRACKER_EXTRACT_MODULES_LIBS) \
 	$(LIBPNG_LIBS)
 
+# PNG Faster
+libextract_png_faster_la_SOURCES = tracker-extract-png-faster.c
+libextract_png_faster_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBPNG_CFLAGS)
+libextract_png_faster_la_LDFLAGS = $(module_flags)
+libextract_png_faster_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS)
 
 # PS
 libextract_ps_la_SOURCES = tracker-extract-ps.c
