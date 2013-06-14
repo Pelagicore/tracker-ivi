@@ -17,6 +17,7 @@ AM_CPPFLAGS = \
 # duplicates work and requires more maintenance to keep modules up to
 # date.
 rules_in_files = \
+	09-png-faster.rule.in \
 	10-abw.rule.in \
 	10-dvi.rule.in \
 	10-epub.rule.in \
@@ -156,6 +157,11 @@ modules_LTLIBRARIES += libextract-iso.la
 rules_DATA += 11-iso.rule
 endif
 
+if HAVE_PNG_FASTER
+modules_LTLIBRARIES += libextract-png-faster.la
+rules_DATA += 09-png-faster.rule
+endif
+
 # ABW
 libextract_abw_la_SOURCES = tracker-extract-abw.c
 libextract_abw_la_CFLAGS = $(TRACKER_EXTRACT_MODULES_CFLAGS)
@@ -247,6 +253,17 @@ libextract_png_la_LIBADD = \
 	$(TRACKER_EXTRACT_MODULES_LIBS) \
 	$(LIBPNG_LIBS)
 
+# PNG
+libextract_png_faster_la_SOURCES = tracker-extract-png-faster.c
+libextract_png_faster_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBPNG_CFLAGS)
+libextract_png_faster_la_LDFLAGS = $(module_flags)
+libextract_png_faster_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS)
 
 # PS
 libextract_ps_la_SOURCES = tracker-extract-ps.c
