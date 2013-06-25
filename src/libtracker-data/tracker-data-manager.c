@@ -3346,7 +3346,8 @@ static GList*
 get_ontologies (gboolean     test_schema,
                 const gchar *ontologies_dir)
 {
-	GList *sorted = NULL;
+	GList  *sorted = NULL;
+	GError *error = NULL;
 
 	if (test_schema) {
 		sorted = g_list_prepend (sorted, g_strdup ("12-nrl.ontology"));
@@ -3356,7 +3357,11 @@ get_ontologies (gboolean     test_schema,
 		GDir        *ontologies;
 		const gchar *conf_file;
 
-		ontologies = g_dir_open (ontologies_dir, 0, NULL);
+		ontologies = g_dir_open (ontologies_dir, 0, &error);
+		if (error) {
+			g_critical("Error reading ontologies directory (%s): %s!",
+		                   ontologies_dir, error->message);
+		}
 
 		conf_file = g_dir_read_name (ontologies);
 
@@ -3373,6 +3378,8 @@ get_ontologies (gboolean     test_schema,
 		g_dir_close (ontologies);
 	}
 
+	if (error)
+		g_error_free(error);
 	return sorted;
 }
 
