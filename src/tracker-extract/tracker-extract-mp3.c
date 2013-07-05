@@ -1070,8 +1070,7 @@ id3v2_strlen (const gchar  encoding,
 static gchar *
 id3v24_text_to_utf8 (const gchar  encoding,
                      const gchar *text,
-                     gssize       len,
-                     id3tag      *info)
+                     gssize       len)
 {
 	/* This byte describes the encoding
 	 * try to convert strings to UTF-8
@@ -1087,7 +1086,7 @@ id3v24_text_to_utf8 (const gchar  encoding,
 		return convert_to_encoding (text,
 		                            len,
 		                            "UTF-8",
-		                            info->encoding ? info->encoding : "Windows-1252",
+		                            "Windows-1252",
 		                            NULL, NULL, NULL);
 	case 0x01 :
 		return convert_to_encoding (text,
@@ -1112,7 +1111,7 @@ id3v24_text_to_utf8 (const gchar  encoding,
 		return convert_to_encoding (text,
 		                            len,
 		                            "UTF-8",
-		                            info->encoding ? info->encoding : "Windows-1252",
+		                            "Windows-1252",
 		                            NULL, NULL, NULL);
 	}
 }
@@ -1120,8 +1119,7 @@ id3v24_text_to_utf8 (const gchar  encoding,
 static gchar *
 id3v2_text_to_utf8 (const gchar  encoding,
                     const gchar *text,
-                    gssize       len,
-                    id3tag      *info)
+                    gssize       len)
 {
 	/* This byte describes the encoding
 	 * try to convert strings to UTF-8
@@ -1137,7 +1135,7 @@ id3v2_text_to_utf8 (const gchar  encoding,
 		return convert_to_encoding (text,
 		                            len,
 		                            "UTF-8",
-		                            info->encoding ? info->encoding : "Windows-1252",
+		                            "Windows-1252",
 		                            NULL, NULL, NULL);
 	case 0x01 :
 		/* return g_convert (text, */
@@ -1155,7 +1153,7 @@ id3v2_text_to_utf8 (const gchar  encoding,
 		return convert_to_encoding (text,
 		                            len,
 		                            "UTF-8",
-		                            info->encoding ? info->encoding : "Windows-1252",
+		                            "Windows-1252",
 		                            NULL, NULL, NULL);
 	}
 }
@@ -1222,7 +1220,6 @@ static void
 get_id3v24_tags (id3v24frame           frame,
                  const gchar          *data,
                  size_t                csize,
-                 id3tag               *info,
                  const gchar          *uri,
                  TrackerSparqlBuilder *metadata,
                  MP3Data              *filedata)
@@ -1273,7 +1270,7 @@ get_id3v24_tags (id3v24frame           frame,
 		offset        = 4 + text_desc_len + id3v2_nul_size (text_encode);
 		text          = &data[pos + offset]; /* <full text string according to encoding> */
 
-		word = id3v24_text_to_utf8 (text_encode, text, csize - offset, info);
+		word = id3v24_text_to_utf8 (text_encode, text, csize - offset);
 
 		if (!tracker_is_empty_string (word)) {
 			g_strstrip (word);
@@ -1289,7 +1286,7 @@ get_id3v24_tags (id3v24frame           frame,
 		gchar *word;
 
 		/* text frames */
-		word = id3v24_text_to_utf8 (data[pos], &data[pos + 1], csize - 1, info);
+		word = id3v24_text_to_utf8 (data[pos], &data[pos + 1], csize - 1);
 		if (!tracker_is_empty_string (word)) {
 			g_strstrip (word);
 		} else {
@@ -1411,7 +1408,6 @@ static void
 get_id3v23_tags (id3v24frame           frame,
                  const gchar          *data,
                  size_t                csize,
-                 id3tag               *info,
                  const gchar          *uri,
                  TrackerSparqlBuilder *metadata,
                  MP3Data              *filedata)
@@ -1462,7 +1458,7 @@ get_id3v23_tags (id3v24frame           frame,
 		offset        = 4 + text_desc_len + id3v2_nul_size (text_encode);
 		text          = &data[pos + offset]; /* <full text string according to encoding> */
 
-		word = id3v2_text_to_utf8 (text_encode, text, csize - offset, info);
+		word = id3v2_text_to_utf8 (text_encode, text, csize - offset);
 
 		if (!tracker_is_empty_string (word)) {
 			g_strstrip (word);
@@ -1479,7 +1475,7 @@ get_id3v23_tags (id3v24frame           frame,
 		gchar *word;
 
 		/* text frames */
-		word = id3v2_text_to_utf8 (data[pos], &data[pos + 1], csize - 1, info);
+		word = id3v2_text_to_utf8 (data[pos], &data[pos + 1], csize - 1);
 
 		if (!tracker_is_empty_string (word)) {
 			g_strstrip (word);
@@ -1595,7 +1591,6 @@ static void
 get_id3v20_tags (id3v2frame            frame,
                  const gchar          *data,
                  size_t                csize,
-                 id3tag               *info,
                  const gchar          *uri,
                  TrackerSparqlBuilder *metadata,
                  MP3Data              *filedata)
@@ -1629,7 +1624,7 @@ get_id3v20_tags (id3v2frame            frame,
 		/* text frames */
 		gchar *word;
 
-		word = id3v2_text_to_utf8 (data[pos], &data[pos + 1], csize - 1, info);
+		word = id3v2_text_to_utf8 (data[pos], &data[pos + 1], csize - 1);
 		if (!tracker_is_empty_string (word)) {
 			g_strstrip (word);
 		} else {
@@ -1725,7 +1720,6 @@ get_id3v20_tags (id3v2frame            frame,
 static void
 parse_id3v24 (const gchar           *data,
               size_t                 size,
-              id3tag                *info,
               const gchar           *uri,
               TrackerSparqlBuilder  *metadata,
               MP3Data               *filedata,
@@ -1824,10 +1818,10 @@ parse_id3v24 (const gchar           *data,
 			gchar *body;
 
 			un_unsync (&data[pos], csize, (unsigned char **) &body, &unsync_size);
-			get_id3v24_tags (frame, body, unsync_size, info, uri, metadata, filedata);
+			get_id3v24_tags (frame, body, unsync_size, uri, metadata, filedata);
 			g_free (body);
 		} else {
-			get_id3v24_tags (frame, &data[pos], csize, info, uri, metadata, filedata);
+			get_id3v24_tags (frame, &data[pos], csize, uri, metadata, filedata);
 		}
 
 		pos += csize;
@@ -1839,7 +1833,6 @@ parse_id3v24 (const gchar           *data,
 static void
 parse_id3v23 (const gchar          *data,
               size_t                size,
-              id3tag               *info,
               const gchar          *uri,
               TrackerSparqlBuilder *metadata,
               MP3Data              *filedata,
@@ -1951,10 +1944,10 @@ parse_id3v23 (const gchar          *data,
 			gchar *body;
 
 			un_unsync (&data[pos], csize, (unsigned char **) &body, &unsync_size);
-			get_id3v23_tags (frame, body, unsync_size, info, uri, metadata, filedata);
+			get_id3v23_tags (frame, body, unsync_size,  uri, metadata, filedata);
 			g_free (body);
 		} else {
-			get_id3v23_tags (frame, &data[pos], csize, info, uri, metadata, filedata);
+			get_id3v23_tags (frame, &data[pos], csize, uri, metadata, filedata);
 		}
 
 		pos += csize;
@@ -1966,7 +1959,6 @@ parse_id3v23 (const gchar          *data,
 static void
 parse_id3v20 (const gchar          *data,
               size_t                size,
-              id3tag               *info,
               const gchar          *uri,
               TrackerSparqlBuilder *metadata,
               MP3Data              *filedata,
@@ -2030,10 +2022,10 @@ parse_id3v20 (const gchar          *data,
 			gchar  *body;
 
 			un_unsync (&data[pos], csize, (unsigned char **) &body, &unsync_size);
-			get_id3v20_tags (frame, body, unsync_size, info, uri, metadata, filedata);
+			get_id3v20_tags (frame, body, unsync_size, uri, metadata, filedata);
 			g_free (body);
 		} else {
-			get_id3v20_tags (frame, &data[pos], csize, info, uri, metadata, filedata);
+			get_id3v20_tags (frame, &data[pos], csize, uri, metadata, filedata);
 		}
 
 		pos += csize;
@@ -2045,7 +2037,6 @@ parse_id3v20 (const gchar          *data,
 static goffset
 parse_id3v2 (const gchar          *data,
              size_t                size,
-             id3tag               *info,
              const gchar          *uri,
              TrackerSparqlBuilder *metadata,
              MP3Data              *filedata)
@@ -2055,9 +2046,9 @@ parse_id3v2 (const gchar          *data,
 
 	do {
 		size_t offset_delta = 0;
-		parse_id3v24 (data + offset, size - offset, info, uri, metadata, filedata, &offset_delta);
-		parse_id3v23 (data + offset, size - offset, info, uri, metadata, filedata, &offset_delta);
-		parse_id3v20 (data + offset, size - offset, info, uri, metadata, filedata, &offset_delta);
+		parse_id3v24 (data + offset, size - offset, uri, metadata, filedata, &offset_delta);
+		parse_id3v23 (data + offset, size - offset, uri, metadata, filedata, &offset_delta);
+		parse_id3v20 (data + offset, size - offset, uri, metadata, filedata, &offset_delta);
 
 		if (offset_delta == 0) {
 			done = TRUE;
@@ -2077,7 +2068,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	gchar *filename, *uri;
 	int fd;
 	void *buffer;
-	void *id3v1_buffer;
 	goffset size;
 	goffset  buffer_size;
 	goffset audio_offset;
@@ -2119,43 +2109,20 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	               0);
 #endif
 
-	id3v1_buffer = read_id3v1_buffer (fd, size);
-
 #ifdef HAVE_POSIX_FADVISE
 	posix_fadvise (fd, 0, 0, POSIX_FADV_DONTNEED);
 #endif /* HAVE_POSIX_FADVISE */
 
-	close (fd);
 
 	if (buffer == NULL || buffer == (void*) -1) {
 		g_free (filename);
 		return FALSE;
 	}
 
-	if (!get_id3 (id3v1_buffer, ID3V1_SIZE, &md.id3v1)) {
-		/* Do nothing? */
-	}
-
-	g_free (id3v1_buffer);
-
-	if (md.id3v1.encoding != NULL) {
-		gchar *locale;
-
-		locale = tracker_locale_get (TRACKER_LOCALE_LANGUAGE);
-		if (!g_str_has_prefix (locale, "ru") &&
-		    !g_str_has_prefix (locale, "uk")) {
-			/* use guessed encoding for ID3v2 tags only in selected locales
-			   where broken ID3v2 is widespread */
-			g_free (md.id3v1.encoding);
-			md.id3v1.encoding = NULL;
-		}
-		g_free (locale);
-		locale = NULL;
-	}
 
 	/* Get other embedded tags */
 	uri = g_file_get_uri (file);
-	audio_offset = parse_id3v2 (buffer, buffer_size, &md.id3v1, uri, metadata, &md);
+	audio_offset = parse_id3v2 (buffer, buffer_size, uri, metadata, &md);
 
 	md.title = tracker_coalesce_strip (4, md.id3v24.title2,
 	                                   md.id3v23.title2,
@@ -2253,6 +2220,43 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	} else if (md.id3v22.set_count != 0) {
 		md.set_count = md.id3v22.set_count;
 	}
+
+	/*
+	 * Only extract id3v1 when there is no id3v2 information available
+	 */
+	if (!md.title          &&
+	    !md.performer      &&
+	    !md.album          &&
+	    !md.recording_time &&
+	    !md.comment        &&
+	    !md.track_number   &&
+	    !md.genre) {
+		void *id3v1_buffer;
+
+		id3v1_buffer = read_id3v1_buffer (fd, size);
+		if (!get_id3 (id3v1_buffer, ID3V1_SIZE, &md.id3v1)) {
+			/* Do nothing? */
+		}
+
+		g_free (id3v1_buffer);
+
+		if (!tracker_is_empty_string(md.id3v1.title))
+			md.title          = md.id3v1.title;
+		if (!tracker_is_empty_string(md.id3v1.artist))
+			md.performer      = md.id3v1.artist;
+		if (!tracker_is_empty_string(md.id3v1.album))
+			md.album          = md.id3v1.album;
+		if (!tracker_is_empty_string(md.id3v1.recording_time))
+			md.recording_time = md.id3v1.recording_time;
+		if (!tracker_is_empty_string(md.id3v1.comment))
+			md.comment        = md.id3v1.comment;
+		if (!tracker_is_empty_string(md.id3v1.genre))
+			md.genre          = md.id3v1.genre;
+
+		md.track_number   = md.id3v1.track_number;
+	}
+
+	close (fd);
 
 	if (md.performer) {
 		md.performer_uri = tracker_sparql_escape_uri_printf ("urn:artist:%s", md.performer);
