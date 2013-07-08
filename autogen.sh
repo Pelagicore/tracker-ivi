@@ -52,4 +52,63 @@ test -n "$srcdir" || srcdir=.
   autopoint --force &&
   AUTOPOINT='intltoolize --automake --copy' autoreconf --verbose --force --install
 ) || exit
-test -n "$NOCONFIGURE" || "$srcdir/configure" "$@"
+
+cfg="--disable-unit-tests
+     --disable-upower
+     --disable-hal
+     --disable-gnome-keyring
+     --disable-libsecret
+     --disable-network-manager
+     --disable-libiptcdata
+     --disable-miner-rss
+     --disable-miner-evolution
+     --disable-miner-thunderbird
+     --disable-miner-firefox
+     --disable-nautilus-extension
+     --disable-taglib
+     --disable-tracker-needle
+     --disable-tracker-preferences
+     --disable-libxml2
+     --disable-poppler
+     --disable-libgxps
+     --disable-libgsf
+     --disable-libosinfo
+     --disable-libcue
+     --disable-playlist
+     --disable-exempi
+
+     --enable-libexif
+     --enable-gdkpixbuf
+     --enable-generic-media-extractor=gstreamer
+     --enable-libgif
+     --enable-libjpeg
+     --enable-libtiff
+     --enable-libvorbis
+     --enable-libflac
+     --enable-png-faster
+
+     --with-unicode-support=libicu"
+
+enable_tracker_ivi=true
+processed=""
+for idx in "$@"; do
+  if [ "$idx" = "--disable-tracker-ivi" ]; then
+    enable_tracker_ivi=false
+  else
+    processed="$processed "$idx
+  fi
+done
+
+if $enable_tracker_ivi; then
+  echo "
+===============================================================================
+  Tracker-IVI configuration enabled, this means certain configuration
+  options have been set for you. If you wish to select options manually, do not
+  use the --enable-tracker-ivi option.
+===============================================================================
+"
+  processed="$processed $cfg"
+fi
+
+
+test -n "$NOCONFIGURE" || "$srcdir/configure" $processed
