@@ -76,6 +76,11 @@ cfg="--disable-unit-tests
      --disable-libcue
      --disable-playlist
      --disable-exempi
+     --disable-abiword
+     --disable-dvi
+     --disable-ps
+     --disable-text
+     --disable-icon
 
      --enable-libexif
      --enable-gdkpixbuf
