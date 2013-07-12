@@ -20,6 +20,7 @@ The default configuration of Tracker-IVI has the following dependencies:
 | libjpeg       | any version   |
 | libgif        | any version   |
 | libtiff       | any version   |
+| libpng        | >= 0.89       |
 | libvorbis     | >= 0.22       |
 | libflac       | >= 1.2.1      |
 | libexif       | >= 0.6        |
@@ -30,13 +31,8 @@ The default configuration of Tracker-IVI has the following dependencies:
 With all dependencies installed, installation should be straight forward:
 
 ```bash
-./autogen.sh --prefix=~/tracker_install
-make
+build-tracker-ivi
 make install
 ```
 
-The `autogen.sh` script specifies a series of configuration arguments to the
-`configure` script, this behavior can be disabled using
-`--disable-tracker-ivi`. It is not possible to specify `--enable` or
-`--disable` switches for the `autogen.sh` script with the Tracker-IVI
-configuration enabled.
+build-tracker-ivi is a makefile which invokes autogen.sh with a specific set of `--enable` and `--disable` switches. The switches are easily configurable in the build-tracker-ivi makefile, and this is a good place to specify `--prefix`, etc. Once `autogen.sh` has been run, `make` is invoked automatically.

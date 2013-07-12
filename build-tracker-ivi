@@ -1,0 +1,50 @@
+#!/usr/bin/make -f
+
+.PHONY: tracker-ivi
+
+CONFIGURE_FLAGS :=					\
+	--disable-unit-tests				\
+	--disable-upower				\
+	--disable-hal					\
+	--disable-gnome-keyring				\
+	--disable-libsecret				\
+	--disable-network-manager			\
+	--disable-libiptcdata				\
+	--disable-miner-rss				\
+	--disable-miner-evolution			\
+	--disable-miner-thunderbird			\
+	--disable-miner-firefox				\
+	--disable-nautilus-extension			\
+	--disable-taglib				\
+	--disable-tracker-needle			\
+	--disable-tracker-preferences			\
+	--disable-libxml2				\
+	--disable-poppler				\
+	--disable-libgxps				\
+	--disable-libgsf				\
+	--disable-libosinfo				\
+	--disable-libcue				\
+	--disable-playlist				\
+	--disable-exempi				\
+	--disable-abiword				\
+	--disable-dvi					\
+	--disable-ps					\
+	--disable-text					\
+	--disable-icon					\
+	--disable-artwork				\
+							\
+	--enable-libexif				\
+	--enable-gdkpixbuf				\
+	--enable-generic-media-extractor=gstreamer	\
+	--enable-libgif					\
+	--enable-libjpeg				\
+	--enable-libtiff				\
+	--enable-libvorbis				\
+	--enable-libflac				\
+	--enable-png-faster				\
+							\
+	--with-unicode-support=libicu
+
+tracker-ivi:
+	./autogen.sh $(CONFIGURE_FLAGS)
+	make
