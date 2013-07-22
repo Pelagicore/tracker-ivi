@@ -31,7 +31,7 @@ The default configuration of Tracker-IVI has the following dependencies:
 With all dependencies installed, installation should be straight forward:
 
 ```bash
-build-tracker-ivi
+./build-tracker-ivi
 make install
 ```
 
