@@ -64,16 +64,16 @@ ivi:trackalbum a rdf:Property ;
 	nrl:maxCardinality 1 ;
 	rdfs:range ivi:Album .
 
-ivi:trackyear a rdf:Property ;
+ivi:trackcreated a rdf:Property ;
 	rdfs:domain ivi:Track ;
 	nrl:maxCardinality 1 ;
-	rdfs:range xsd:integer .
+	rdfs:range xsd:string .
 
 # This is the ID3 numeric tag.. Could also be done as a member of a genre class
 ivi:trackgenre a rdf:Property ;
 	rdfs:domain ivi:Track ;
 	nrl:maxCardinality 1 ;
-	rdfs:range xsd:integer .
+	rdfs:range xsd:string .
 
 # Length in seconds
 ivi:tracklength a rdf:Property ;

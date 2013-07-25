@@ -2119,6 +2119,34 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		return FALSE;
 	}
 
+	/*
+	 * Only extract id3v1 when there is no id3v2 information available
+	 */
+	{
+		void *id3v1_buffer;
+
+		id3v1_buffer = read_id3v1_buffer (fd, size);
+		if (!get_id3 (id3v1_buffer, ID3V1_SIZE, &md.id3v1)) {
+			/* Do nothing? */
+		}
+
+		g_free (id3v1_buffer);
+
+		if (!tracker_is_empty_string(md.id3v1.title))
+			md.title          = md.id3v1.title;
+		if (!tracker_is_empty_string(md.id3v1.artist))
+			md.performer      = md.id3v1.artist;
+		if (!tracker_is_empty_string(md.id3v1.album))
+			md.album          = md.id3v1.album;
+		if (!tracker_is_empty_string(md.id3v1.recording_time))
+			md.recording_time = md.id3v1.recording_time;
+		if (!tracker_is_empty_string(md.id3v1.comment))
+			md.comment        = md.id3v1.comment;
+		if (!tracker_is_empty_string(md.id3v1.genre))
+			md.genre          = md.id3v1.genre;
+
+		md.track_number   = md.id3v1.track_number;
+	}
 
 	/* Get other embedded tags */
 	uri = g_file_get_uri (file);
@@ -2219,41 +2247,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		md.set_count = md.id3v23.set_count;
 	} else if (md.id3v22.set_count != 0) {
 		md.set_count = md.id3v22.set_count;
-	}
-
-	/*
-	 * Only extract id3v1 when there is no id3v2 information available
-	 */
-	if (!md.title          &&
-	    !md.performer      &&
-	    !md.album          &&
-	    !md.recording_time &&
-	    !md.comment        &&
-	    !md.track_number   &&
-	    !md.genre) {
-		void *id3v1_buffer;
-
-		id3v1_buffer = read_id3v1_buffer (fd, size);
-		if (!get_id3 (id3v1_buffer, ID3V1_SIZE, &md.id3v1)) {
-			/* Do nothing? */
-		}
-
-		g_free (id3v1_buffer);
-
-		if (!tracker_is_empty_string(md.id3v1.title))
-			md.title          = md.id3v1.title;
-		if (!tracker_is_empty_string(md.id3v1.artist))
-			md.performer      = md.id3v1.artist;
-		if (!tracker_is_empty_string(md.id3v1.album))
-			md.album          = md.id3v1.album;
-		if (!tracker_is_empty_string(md.id3v1.recording_time))
-			md.recording_time = md.id3v1.recording_time;
-		if (!tracker_is_empty_string(md.id3v1.comment))
-			md.comment        = md.id3v1.comment;
-		if (!tracker_is_empty_string(md.id3v1.genre))
-			md.genre          = md.id3v1.genre;
-
-		md.track_number   = md.id3v1.track_number;
 	}
 
 	close (fd);
@@ -2405,10 +2398,10 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		tracker_sparql_builder_object_iri (metadata, md.album_uri);
 	}
 
-//	if (md.recording_time) {
-//		tracker_sparql_builder_predicate (metadata, "nie:contentCreated");
-//		tracker_sparql_builder_object_unvalidated (metadata, md.recording_time);
-//	}
+	if (md.recording_time) {
+		tracker_sparql_builder_predicate (metadata, "ivi:trackcreated");
+		tracker_sparql_builder_object_unvalidated (metadata, md.recording_time);
+	}
 
 	if (md.genre) {
 		tracker_sparql_builder_predicate (metadata, "ivi:trackgenre");
@@ -2441,7 +2434,7 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 //	}
 
 	if (md.track_number > 0) {
-		tracker_sparql_builder_predicate (metadata, "ivi:tracktracknumer");
+		tracker_sparql_builder_predicate (metadata, "ivi:tracktracknumber");
 		tracker_sparql_builder_object_int64 (metadata, md.track_number);
 	}
 
