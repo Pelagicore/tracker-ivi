@@ -1965,7 +1965,7 @@ miner_files_add_to_datasource (TrackerMinerFiles    *mf,
 	}
 
 	tracker_sparql_builder_predicate (sparql, "a");
-	tracker_sparql_builder_object (sparql, "nfo:FileDataObject");
+	tracker_sparql_builder_object (sparql, "ivi:File");
 
 	tracker_sparql_builder_predicate (sparql, "nie:dataSource");
 	tracker_sparql_builder_object_iri (sparql, removable_device_urn);
@@ -2331,51 +2331,51 @@ process_file_cb (GObject      *object,
 	}
 
 	tracker_sparql_builder_predicate (sparql, "a");
-	tracker_sparql_builder_object (sparql, "nfo:FileDataObject");
-	tracker_sparql_builder_object (sparql, "nie:InformationElement");
+	tracker_sparql_builder_object (sparql, "ivi:File");
 
 	is_directory = (g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY ?
 	                TRUE : FALSE);
-	if (is_directory) {
-		tracker_sparql_builder_object (sparql, "nfo:Folder");
+
+/*	if (is_directory) {
+		tracker_sparql_builder_object (sparql, "ivi:Folder");
 	}
-
+*/
 	parent_urn = tracker_miner_fs_get_parent_urn (TRACKER_MINER_FS (data->miner), file);
-
+/*
 	if (parent_urn) {
 		tracker_sparql_builder_predicate (sparql, "nfo:belongsToContainer");
 		tracker_sparql_builder_object_iri (sparql, parent_urn);
 	}
-
-	tracker_sparql_builder_predicate (sparql, "nfo:fileName");
+*/
+	tracker_sparql_builder_predicate (sparql, "ivi:filename");
 	tracker_sparql_builder_object_string (sparql, g_file_info_get_display_name (file_info));
 
-	tracker_sparql_builder_predicate (sparql, "nfo:fileSize");
+/*	tracker_sparql_builder_predicate (sparql, "nfo:fileSize");
 	tracker_sparql_builder_object_int64 (sparql, g_file_info_get_size (file_info));
-
+*/
 	time_ = g_file_info_get_attribute_uint64 (file_info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
-	tracker_sparql_builder_predicate (sparql, "nfo:fileLastModified");
+	tracker_sparql_builder_predicate (sparql, "ivi:fileLastModified");
 	tracker_sparql_builder_object_date (sparql, (time_t *) &time_);
-
+/*
 	time_ = g_file_info_get_attribute_uint64 (file_info, G_FILE_ATTRIBUTE_TIME_ACCESS);
 	tracker_sparql_builder_predicate (sparql, "nfo:fileLastAccessed");
 	tracker_sparql_builder_object_date (sparql, (time_t *) &time_);
-
+*/
 	/* Laying the link between the IE and the DO. We use IE = DO */
-	tracker_sparql_builder_predicate (sparql, "nie:isStoredAs");
-	if (is_iri) {
-		tracker_sparql_builder_object_iri (sparql, urn);
-	} else {
-		tracker_sparql_builder_object (sparql, urn);
-	}
+//	tracker_sparql_builder_predicate (sparql, "nie:isStoredAs");
+//	if (is_iri) {
+//		tracker_sparql_builder_object_iri (sparql, urn);
+//	} else {
+//		tracker_sparql_builder_object (sparql, urn);
+//	}
 
 	/* The URL of the DataObject (because IE = DO, this is correct) */
-	tracker_sparql_builder_predicate (sparql, "nie:url");
+	tracker_sparql_builder_predicate (sparql, "ivi:fileurl");
 	tracker_sparql_builder_object_string (sparql, uri);
 
-	tracker_sparql_builder_predicate (sparql, "nie:mimeType");
+/*	tracker_sparql_builder_predicate (sparql, "nie:mimeType");
 	tracker_sparql_builder_object_string (sparql, mime_type);
-
+*/
 	miner_files_add_to_datasource (data->miner, file, sparql);
 
 	if (tracker_extract_module_manager_mimetype_is_handled (mime_type)) {
