@@ -17,6 +17,7 @@ AM_CPPFLAGS = \
 # duplicates work and requires more maintenance to keep modules up to
 # date.
 rules_in_files = \
+	09-mp3-ivi.rule.in \
 	10-abw.rule.in \
 	10-dvi.rule.in \
 	10-epub.rule.in \
@@ -161,6 +162,11 @@ modules_LTLIBRARIES += libextract-mp3.la
 rules_DATA += 10-mp3.rule
 endif
 
+if HAVE_MP3
+modules_LTLIBRARIES += libextract-mp3-ivi.la
+rules_DATA += 09-mp3-ivi.rule
+endif
+
 if HAVE_PS
 modules_LTLIBRARIES += libextract-ps.la
 rules_DATA += 10-ps.rule
@@ -191,6 +197,16 @@ libextract_mp3_la_SOURCES = tracker-extract-mp3.c
 libextract_mp3_la_CFLAGS = $(TRACKER_EXTRACT_MODULES_CFLAGS)
 libextract_mp3_la_LDFLAGS = $(module_flags)
 libextract_mp3_la_LIBADD =  \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS)
+
+# MP3
+libextract_mp3_ivi_la_SOURCES = tracker-extract-mp3-ivi.c
+libextract_mp3_ivi_la_CFLAGS = $(TRACKER_EXTRACT_MODULES_CFLAGS)
+libextract_mp3_ivi_la_LDFLAGS = $(module_flags)
+libextract_mp3_ivi_la_LIBADD =  \
 	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
 	$(top_builddir)/src/libtracker-common/libtracker-common.la \
 	$(BUILD_LIBS) \
