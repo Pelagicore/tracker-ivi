@@ -953,14 +953,6 @@ mp3_parse_header (const gchar          *data,
 		return FALSE;
 	}
 
-//	tracker_sparql_builder_predicate (metadata, "nfo:codec");
-//	tracker_sparql_builder_object_string (metadata, "MPEG");
-
-	n_channels = ((header & ch_mask) == ch_mask) ? 1 : 2;
-
-//	tracker_sparql_builder_predicate (metadata, "nfo:channels");
-//	tracker_sparql_builder_object_int64 (metadata, n_channels);
-
 	avg_bps /= frames;
 
 	if ((!vbr_flag && frames > VBR_THRESHOLD) || (frames > MAX_FRAMES_SCAN)) {
@@ -974,20 +966,6 @@ mp3_parse_header (const gchar          *data,
 
 	tracker_sparql_builder_predicate (metadata, "ivi:tracklength");
 	tracker_sparql_builder_object_int64 (metadata, length);
-
-//	tracker_sparql_builder_predicate (metadata, "nfo:sampleRate");
-//	tracker_sparql_builder_object_int64 (metadata, sample_rate);
-//	tracker_sparql_builder_predicate (metadata, "nfo:averageBitrate");
-//	tracker_sparql_builder_object_int64 (metadata, avg_bps*1000);
-
-	if (guess_dlna_profile (bitrate, sample_rate,
-	                        mpeg_ver, layer_ver, n_channels,
-	                        &dlna_profile, &dlna_mimetype)) {
-//		tracker_sparql_builder_predicate (metadata, "nmm:dlnaProfile");
-//		tracker_sparql_builder_object_string (metadata, dlna_profile);
-//		tracker_sparql_builder_predicate (metadata, "nmm:dlnaMime");
-//		tracker_sparql_builder_object_string (metadata, dlna_mimetype);
-	}
 
 	return TRUE;
 }
@@ -1047,7 +1025,7 @@ id3v2_strlen (const gchar  encoding,
 	switch (encoding) {
 	case 0x01:
 	case 0x02:
-		
+
 		/* UTF-16, string terminated by two NUL bytes */
 		pos = memmem (text, len, "\0\0\0", 3);
 
@@ -2291,26 +2269,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		tracker_sparql_builder_insert_close (preupdate);
 	}
 
-//	if (md.lyricist) {
-//		md.lyricist_uri = tracker_sparql_escape_uri_printf ("urn:artist:%s", md.lyricist);
-//
-//		tracker_sparql_builder_insert_open (preupdate, NULL);
-//		if (graph) {
-//			tracker_sparql_builder_graph_open (preupdate, graph);
-//		}
-//
-//		tracker_sparql_builder_subject_iri (preupdate, md.lyricist_uri);
-//		tracker_sparql_builder_predicate (preupdate, "a");
-//		tracker_sparql_builder_object (preupdate, "nmm:Artist");
-//		tracker_sparql_builder_predicate (preupdate, "nmm:artistName");
-//		tracker_sparql_builder_object_unvalidated (preupdate, md.lyricist);
-//
-//		if (graph) {
-//			tracker_sparql_builder_graph_close (preupdate);
-//		}
-//		tracker_sparql_builder_insert_close (preupdate);
-//	}
-
 	if (md.album) {
 		md.album_uri = tracker_sparql_escape_uri_printf ("urn:album:%s", md.album);
 
@@ -2322,16 +2280,13 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		tracker_sparql_builder_subject_iri (preupdate, md.album_uri);
 		tracker_sparql_builder_predicate (preupdate, "a");
 		tracker_sparql_builder_object (preupdate, "ivi:Album");
-		/* FIXME: nmm:albumTitle is now deprecated
-		 * tracker_sparql_builder_predicate (preupdate, "nie:title");
-		 */
 		tracker_sparql_builder_predicate (preupdate, "ivi:albumname");
 		tracker_sparql_builder_object_unvalidated (preupdate, md.album);
 
-//		if (md.performer_uri) {
-//			tracker_sparql_builder_predicate (preupdate, "nmm:albumArtist");
-//			tracker_sparql_builder_object_iri (preupdate, md.performer_uri);
-//		}
+		if (md.performer_uri) {
+			tracker_sparql_builder_predicate (preupdate, "ivi:albumalbumartist");
+			tracker_sparql_builder_object_iri (preupdate, md.performer_uri);
+		}
 
 		if (graph) {
 			tracker_sparql_builder_graph_close (preupdate);
@@ -2375,12 +2330,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	                                   uri,
 	                                   NULL);
 
-//	if (md.lyricist_uri) {
-//		tracker_sparql_builder_predicate (metadata, "nmm:lyricist");
-//		tracker_sparql_builder_object_iri (metadata, md.lyricist_uri);
-//		g_free (md.lyricist_uri);
-//	}
-
 	if (md.performer_uri) {
 		tracker_sparql_builder_predicate (metadata, "ivi:trackartist");
 		tracker_sparql_builder_object_iri (metadata, md.performer_uri);
@@ -2408,88 +2357,20 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		tracker_sparql_builder_object_unvalidated (metadata, md.genre);
 	}
 
-//	if (md.copyright) {
-//		tracker_sparql_builder_predicate (metadata, "nie:copyright");
-//		tracker_sparql_builder_object_unvalidated (metadata, md.copyright);
-//	}
+	if (md.copyright) {
+		tracker_sparql_builder_predicate (metadata, "ivi:trackcopyright");
+		tracker_sparql_builder_object_unvalidated (metadata, md.copyright);
+	}
 
-//	if (md.comment) {
-//		tracker_sparql_builder_predicate (metadata, "nie:comment");
-//		tracker_sparql_builder_object_unvalidated (metadata, md.comment);
-//	}
-
-//	if (md.publisher) {
-//		tracker_sparql_builder_predicate (metadata, "nco:publisher");
-//		tracker_sparql_builder_object_blank_open (metadata);
-//		tracker_sparql_builder_predicate (metadata, "a");
-//		tracker_sparql_builder_object (metadata, "nco:Contact");
-//		tracker_sparql_builder_predicate (metadata, "nco:fullname");
-//		tracker_sparql_builder_object_unvalidated (metadata, md.publisher);
-//		tracker_sparql_builder_object_blank_close (metadata);
-//	}
-
-//	if (md.encoded_by) {
-//		tracker_sparql_builder_predicate (metadata, "nfo:encodedBy");
-//		tracker_sparql_builder_object_unvalidated (metadata, md.encoded_by);
-//	}
+	if (md.comment) {
+		tracker_sparql_builder_predicate (metadata, "ivi:trackcomment");
+		tracker_sparql_builder_object_unvalidated (metadata, md.comment);
+	}
 
 	if (md.track_number > 0) {
 		tracker_sparql_builder_predicate (metadata, "ivi:tracktracknumber");
 		tracker_sparql_builder_object_int64 (metadata, md.track_number);
 	}
-
-//	if (md.album) {
-//		gchar *album_disc_uri;
-//
-//		album_disc_uri = tracker_sparql_escape_uri_printf ("urn:album-disc:%s:Disc%d",
-//		                                                   md.album,
-//		                                                   md.set_number > 0 ? md.set_number : 1);
-//
-//		tracker_sparql_builder_delete_open (preupdate, NULL);
-//		tracker_sparql_builder_subject_iri (preupdate, album_disc_uri);
-//		tracker_sparql_builder_predicate (preupdate, "nmm:setNumber");
-//		tracker_sparql_builder_object_variable (preupdate, "unknown");
-//		tracker_sparql_builder_delete_close (preupdate);
-//		tracker_sparql_builder_where_open (preupdate);
-//		tracker_sparql_builder_subject_iri (preupdate, album_disc_uri);
-//		tracker_sparql_builder_predicate (preupdate, "nmm:setNumber");
-//		tracker_sparql_builder_object_variable (preupdate, "unknown");
-//		tracker_sparql_builder_where_close (preupdate);
-//
-//		tracker_sparql_builder_delete_open (preupdate, NULL);
-//		tracker_sparql_builder_subject_iri (preupdate, album_disc_uri);
-//		tracker_sparql_builder_predicate (preupdate, "nmm:albumDiscAlbum");
-//		tracker_sparql_builder_object_variable (preupdate, "unknown");
-//		tracker_sparql_builder_delete_close (preupdate);
-//		tracker_sparql_builder_where_open (preupdate);
-//		tracker_sparql_builder_subject_iri (preupdate, album_disc_uri);
-//		tracker_sparql_builder_predicate (preupdate, "nmm:albumDiscAlbum");
-//		tracker_sparql_builder_object_variable (preupdate, "unknown");
-//		tracker_sparql_builder_where_close (preupdate);
-//
-//		tracker_sparql_builder_insert_open (preupdate, NULL);
-//		if (graph) {
-//			tracker_sparql_builder_graph_open (preupdate, graph);
-//		}
-//
-//		tracker_sparql_builder_subject_iri (preupdate, album_disc_uri);
-//		tracker_sparql_builder_predicate (preupdate, "a");
-//		tracker_sparql_builder_object (preupdate, "nmm:MusicAlbumDisc");
-//		tracker_sparql_builder_predicate (preupdate, "nmm:setNumber");
-//		tracker_sparql_builder_object_int64 (preupdate, md.set_number > 0 ? md.set_number : 1);
-//		tracker_sparql_builder_predicate (preupdate, "nmm:albumDiscAlbum");
-//		tracker_sparql_builder_object_iri (preupdate, md.album_uri);
-//
-//		if (graph) {
-//			tracker_sparql_builder_graph_close (preupdate);
-//		}
-//		tracker_sparql_builder_insert_close (preupdate);
-//
-//		tracker_sparql_builder_predicate (metadata, "nmm:musicAlbumDisc");
-//		tracker_sparql_builder_object_iri (metadata, album_disc_uri);
-//
-//		g_free (album_disc_uri);
-//	}
 
 	g_free (md.album_uri);
 
