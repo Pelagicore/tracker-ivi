@@ -2239,6 +2239,26 @@ fi
 AM_CONDITIONAL(HAVE_MP3, test "x$have_mp3" = "xyes")
 
 ####################################################################
+# Check for tracker-extract: mp3-ivi
+####################################################################
+
+AC_ARG_ENABLE(mp3-ivi,
+              AS_HELP_STRING([--enable-mp3-ivi],
+                             [enable MP3-IVI support [[default=auto]]]),,
+              [enable_mp3_ivi=auto])
+
+if test "x$enable_mp3_ivi" != "xno"; then
+   AC_SUBST(MP3_IVI_CFLAGS)
+   AC_SUBST(MP3_IVI_LIBS)
+   AC_DEFINE(HAVE_MP3_IVI, [], [Define if we have MP3-IVI extractor])
+   have_mp3_ivi=yes
+else
+   have_mp3_ivi="no  (disabled)"
+fi
+
+AM_CONDITIONAL(HAVE_MP3_IVI, test "x$have_mp3_ivi" = "xyes")
+
+####################################################################
 # Check for tracker-extract: ps
 ####################################################################
 
@@ -2381,6 +2401,35 @@ fi
 
 AM_CONDITIONAL(HAVE_ARTWORK, test "x$have_artwork" = "xyes")
 
+####################################################################
+# Check whether we should include IVI-specific ontologies
+####################################################################
+
+AC_ARG_ENABLE(ivi-ontologies,
+              AS_HELP_STRING([--enable-ivi-ontologies],
+                             [enable IVI-specific ontologies [[default=no]]]),,
+              [enable_ivi_ontologies=no])
+
+if test "x$enable_ivi_ontologies" != "xno"; then
+   AC_DEFINE(ENABLE_IVI_ONTOLOGIES, [], [Define if we should install IVI-specific ontologies])
+fi
+
+AM_CONDITIONAL(ENABLE_IVI_ONTOLOGIES, test "x$enable_ivi_ontologies" = "xyes")
+
+####################################################################
+# Check whether we should exclude non-IVI ontologies
+####################################################################
+
+AC_ARG_ENABLE(non-ivi-ontologies,
+              AS_HELP_STRING([--enable-non-ivi-ontologies],
+                             [enable non-IVI ontologies [[default=yes]]]),,
+              [enable_non_ivi_ontologies=yes])
+
+if test "x$enable_non_ivi_ontologies" != "xno"; then
+   AC_DEFINE(ENABLE_NON_IVI_ONTOLOGIES, [], [Define if we should enable non-IVI ontologies])
+fi
+
+AM_CONDITIONAL(ENABLE_NON_IVI_ONTOLOGIES, test "x$enable_non_ivi_ontologies" = "xyes")
 
 ##################################################################
 # Write generated files
@@ -2599,6 +2648,13 @@ Metadata Extractors:
 	Support PS parsing:                     $have_ps
 	Support text parsing:                   $have_text
 	Support icon parsing:                   $have_icon
+
+IVI-specific settings:
+	Include IVI ontology:                   $enable_ivi_ontologies
+	Exclude non-IVI ontologies:             $enable_non_ivi_ontologies
+
+IVI-specific extractors:
+	Include MP3-IVI extractor               $have_mp3_ivi
 
 Data Miners:
 
