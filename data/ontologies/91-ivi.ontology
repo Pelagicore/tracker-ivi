@@ -221,17 +221,17 @@ ivi:imagegpsaltitude a rdf:Property ;
 	nrl:maxCardinality 1 ;
 	rdfs:range xsd:integer .
 
-ivi:imagelongitude a rdf:Property ;
+ivi:imagegpslongitude a rdf:Property ;
 	rdfs:domain ivi:Image ;
 	nrl:maxCardinality 1 ;
 	rdfs:range xsd:integer .
 
-ivi:imagelatitude a rdf:Property ;
+ivi:imagegpslatitude a rdf:Property ;
 	rdfs:domain ivi:Image ;
 	nrl:maxCardinality 1 ;
 	rdfs:range xsd:integer .
 
-ivi:imagedirection a rdf:Property ;
+ivi:imagegpsdirection a rdf:Property ;
 	rdfs:domain ivi:Image ;
 	nrl:maxCardinality 1 ;
 	rdfs:range xsd:string .

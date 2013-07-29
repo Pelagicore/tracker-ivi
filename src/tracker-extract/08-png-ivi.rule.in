@@ -1,0 +1,4 @@
+[ExtractorRule]
+ModulePath=@modulesdir@/libextract-png-ivi.so
+MimeTypes=image/png;sketch/png;
+
