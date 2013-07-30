@@ -2279,6 +2279,26 @@ fi
 AM_CONDITIONAL(HAVE_PNG_IVI, test "x$have_png_ivi" = "xyes")
 
 ####################################################################
+# Check for tracker-extract: jpeg-ivi
+####################################################################
+
+AC_ARG_ENABLE(jpeg-ivi,
+              AS_HELP_STRING([--enable-jpeg-ivi],
+                             [enable JPEG-IVI support [[default=auto]]]),,
+              [enable_jpeg_ivi=auto])
+
+if test "x$enable_jpeg_ivi" != "xno"; then
+   AC_SUBST(JPEG_IVI_CFLAGS)
+   AC_SUBST(JPEG_IVI_LIBS)
+   AC_DEFINE(HAVE_JPEG_IVI, [], [Define if we have JPEG-IVI extractor])
+   have_jpeg_ivi=yes
+else
+   have_jpeg_ivi="no  (disabled)"
+fi
+
+AM_CONDITIONAL(HAVE_JPEG_IVI, test "x$have_jpeg_ivi" = "xyes")
+
+####################################################################
 # Check for tracker-extract: ps
 ####################################################################
 
@@ -2676,6 +2696,7 @@ IVI-specific settings:
 IVI-specific extractors:
 	Include MP3-IVI extractor               $have_mp3_ivi
 	Include PNG-IVI extractor               $have_png_ivi
+	Include JPEG-IVI extractor              $have_jpeg_ivi
 
 Data Miners:
 

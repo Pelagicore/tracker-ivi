@@ -18,6 +18,7 @@ AM_CPPFLAGS = \
 # date.
 rules_in_files = \
 	08-png-ivi.rule.in \
+	09-jpeg-ivi.rule.in \
 	09-mp3-ivi.rule.in \
 	10-abw.rule.in \
 	10-dvi.rule.in \
@@ -186,6 +187,11 @@ endif
 if HAVE_PNG_IVI
 modules_LTLIBRARIES += libextract-png-ivi.la
 rules_DATA += 08-png-ivi.rule
+endif
+
+if HAVE_JPEG_IVI
+modules_LTLIBRARIES += libextract-jpeg-ivi.la
+rules_DATA += 09-jpeg-ivi.rule
 endif
 
 # ABW
@@ -525,6 +531,20 @@ libextract_png_ivi_la_LIBADD =  \
 	$(top_builddir)/src/libtracker-common/libtracker-common.la \
 	$(BUILD_LIBS) \
 	$(TRACKER_EXTRACT_MODULES_LIBS)
+
+# JPEG-IVI
+libextract_jpeg_ivi_la_SOURCES = tracker-extract-jpeg-ivi.c
+libextract_jpeg_ivi_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBJPEG_CFLAGS)
+libextract_jpeg_ivi_la_LDFLAGS = $(module_flags)
+libextract_jpeg_ivi_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS) \
+	$(LIBJPEG_LIBS)
+
 
 #
 # Binaries
