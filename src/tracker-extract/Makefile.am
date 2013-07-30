@@ -17,6 +17,7 @@ AM_CPPFLAGS = \
 # duplicates work and requires more maintenance to keep modules up to
 # date.
 rules_in_files = \
+	07-png-faster-ivi.rule.in \
 	08-png-ivi.rule.in \
 	09-jpeg-ivi.rule.in \
 	09-mp3-ivi.rule.in \
@@ -198,6 +199,11 @@ endif
 if HAVE_JPEG_IVI
 modules_LTLIBRARIES += libextract-jpeg-ivi.la
 rules_DATA += 09-jpeg-ivi.rule
+endif
+
+if HAVE_PNG_FASTER_IVI
+modules_LTLIBRARIES += libextract-png-faster-ivi.la
+rules_DATA += 07-png-faster-ivi.rule
 endif
 
 # ABW
@@ -562,6 +568,17 @@ libextract_jpeg_ivi_la_LIBADD = \
 	$(TRACKER_EXTRACT_MODULES_LIBS) \
 	$(LIBJPEG_LIBS)
 
+# PNG Faster-ivi
+libextract_png_faster_ivi_la_SOURCES = tracker-extract-png-faster-ivi.c
+libextract_png_faster_ivi_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBPNG_CFLAGS)
+libextract_png_faster_ivi_la_LDFLAGS = $(module_flags)
+libextract_png_faster_ivi_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS)
 
 #
 # Binaries

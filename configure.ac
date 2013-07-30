@@ -2298,6 +2298,25 @@ fi
 
 AM_CONDITIONAL(HAVE_JPEG_IVI, test "x$have_jpeg_ivi" = "xyes")
 
+#####################################################################
+# Check for tracker-extract: png-faster-ivi
+#####################################################################
+
+# Extracts metadata from tEXt and iTXt chunks found before and after IDAT
+# chunks Faster than tracker-extract-png since IDAT chunks are skipped.
+
+AC_ARG_ENABLE(png-faster-ivi,
+             AS_HELP_STRING([--enable-png-faster-ivi],
+                            [enable a faster PNG-IVI extractor [[default=auto]]]),
+                            [enable_png_faster_ivi=yes],
+                            [enable_png_faster_ivi=no])
+
+if test "x$enable_png_faster_ivi" != "xno"; then
+  AC_DEFINE(HAVE_PNG_FASTER_IVI, 1, [Faster PNG-IVI extractor])
+fi
+
+AM_CONDITIONAL(HAVE_PNG_FASTER_IVI, test "x$enable_png_faster_ivi" = "xyes")
+
 ####################################################################
 # Check for tracker-extract: ps
 ####################################################################
@@ -2716,6 +2735,7 @@ IVI-specific settings:
 IVI-specific extractors:
 	Include MP3-IVI extractor               $have_mp3_ivi
 	Include PNG-IVI extractor               $have_png_ivi
+	Include PNG-faster-IVI                  $enable_png_faster_ivi
 	Include JPEG-IVI extractor              $have_jpeg_ivi
 
 Data Miners:

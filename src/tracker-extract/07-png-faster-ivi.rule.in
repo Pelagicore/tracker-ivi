@@ -1,0 +1,4 @@
+[ExtractorRule]
+ModulePath=@modulesdir@/libextract-png-faster-ivi.so
+MimeTypes=image/png
+
