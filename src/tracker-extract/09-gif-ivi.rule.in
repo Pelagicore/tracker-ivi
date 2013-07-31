@@ -1,0 +1,4 @@
+[ExtractorRule]
+ModulePath=@modulesdir@/libextract-gif-ivi.so
+MimeTypes=image/gif
+

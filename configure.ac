@@ -2317,6 +2317,53 @@ fi
 
 AM_CONDITIONAL(HAVE_PNG_FASTER_IVI, test "x$enable_png_faster_ivi" = "xyes")
 
+##################################################################
+# Check for tracker-extract: libgif-ivi
+##################################################################
+
+# FIXME: This should be package based. Unfortunately in several main
+# distros, it is not.
+
+OLD_CFLAGS="$CFLAGS"
+OLD_LIBS="$LIBS"
+CFLAGS=""
+LIBS=""
+
+AC_ARG_ENABLE(libgif-ivi,
+              AS_HELP_STRING([--enable-libgif-ivi],
+                             [enable extractor for GIF-IVI [[default=auto]]]),,
+              [enable_libgif=auto])
+
+if test "x$enable_libgif_ivi" != "xno" ; then
+   AC_CHECK_HEADER(gif_lib.h,
+   AC_CHECK_LIB(gif,DGifOpen))
+
+   have_libgif_ivi=${ac_cv_lib_gif_DGifOpen:-no}
+
+   LIBGIF_IVI_CFLAGS="$CFLAGS"
+   LIBGIF_IVI_LIBS="$LIBS"
+
+   AC_SUBST(LIBGIF_IVI_CFLAGS)
+   AC_SUBST(LIBGIF_IVI_LIBS)
+
+   if test "x$have_libgif_ivi" = "xyes"; then
+      AC_DEFINE(HAVE_LIBGIF_IVI, [], [Define if we have libgif-ivi])
+   fi
+else
+   have_libgif_ivi="no  (disabled)"
+fi
+
+if test "x$enable_libgif_ivi" = "xyes"; then
+   if test "x$have_libgif_ivi" != "xyes"; then
+      AC_MSG_ERROR([Couldn't find libgif >= $LIBGIF_REQUIRED.])
+   fi
+fi
+
+AM_CONDITIONAL(HAVE_LIBGIF_IVI, test "x$have_libgif_ivi" = "xyes")
+
+CFLAGS="$OLD_CFLAGS"
+LIBS="$OLD_LIBS"
+
 ####################################################################
 # Check for tracker-extract: ps
 ####################################################################
@@ -2737,6 +2784,7 @@ IVI-specific extractors:
 	Include PNG-IVI extractor               $have_png_ivi
 	Include PNG-faster-IVI                  $enable_png_faster_ivi
 	Include JPEG-IVI extractor              $have_jpeg_ivi
+	Include GIF-IVI extractor               $have_libgif_ivi
 
 Data Miners:
 

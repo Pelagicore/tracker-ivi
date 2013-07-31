@@ -19,6 +19,7 @@ AM_CPPFLAGS = \
 rules_in_files = \
 	07-png-faster-ivi.rule.in \
 	08-png-ivi.rule.in \
+	09-gif-ivi.rule.in \
 	09-jpeg-ivi.rule.in \
 	09-mp3-ivi.rule.in \
 	09-png-faster.rule.in \
@@ -199,6 +200,11 @@ endif
 if HAVE_JPEG_IVI
 modules_LTLIBRARIES += libextract-jpeg-ivi.la
 rules_DATA += 09-jpeg-ivi.rule
+endif
+
+if HAVE_LIBGIF_IVI
+modules_LTLIBRARIES += libextract-gif-ivi.la
+rules_DATA += 09-gif-ivi.rule
 endif
 
 if HAVE_PNG_FASTER_IVI
@@ -580,6 +586,18 @@ libextract_png_faster_ivi_la_LIBADD = \
 	$(BUILD_LIBS) \
 	$(TRACKER_EXTRACT_MODULES_LIBS)
 
+# GIF-ivi
+libextract_gif_ivi_la_SOURCES = tracker-extract-gif-ivi.c
+libextract_gif_ivi_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBGIF_IVI_CFLAGS)
+libextract_gif_ivi_la_LDFLAGS = $(module_flags)
+libextract_gif_ivi_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS) \
+	$(LIBGIF_IVI_LIBS)
 #
 # Binaries
 #
