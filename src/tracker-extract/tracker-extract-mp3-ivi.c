@@ -963,10 +963,10 @@ mp3_parse_header (const gchar          *data,
 		/* Note that sample_rate is always > 0, checked before */
 		length = spfp8 * 8 * frames / sample_rate;
 	}
-
+/*
 	tracker_sparql_builder_predicate (metadata, "ivi:tracklength");
 	tracker_sparql_builder_object_int64 (metadata, length);
-
+*/
 	return TRUE;
 }
 
@@ -1234,29 +1234,29 @@ get_id3v24_tags (id3v24frame           frame,
 	}
 
 	case ID3V24_COMM: {
-		gchar *word;
-		gchar text_encode;
-		const gchar *text_desc;
-		const gchar *text;
-		guint offset;
-		gint text_desc_len;
-
-		text_encode   =  data[pos + 0]; /* $xx */
-		text_desc     = &data[pos + 4]; /* <text string according to encoding> $00 (00) */
-		text_desc_len = id3v2_strlen (text_encode, text_desc, csize - 4);
-
-		offset        = 4 + text_desc_len + id3v2_nul_size (text_encode);
-		text          = &data[pos + offset]; /* <full text string according to encoding> */
-
-		word = id3v24_text_to_utf8 (text_encode, text, csize - offset);
-
-		if (!tracker_is_empty_string (word)) {
-			g_strstrip (word);
-			g_free (tag->comment);
-			tag->comment = word;
-		} else {
-			g_free (word);
-		}
+//		gchar *word;
+//		gchar text_encode;
+//		const gchar *text_desc;
+//		const gchar *text;
+//		guint offset;
+//		gint text_desc_len;
+//
+//		text_encode   =  data[pos + 0]; /* $xx */
+//		text_desc     = &data[pos + 4]; /* <text string according to encoding> $00 (00) */
+//		text_desc_len = id3v2_strlen (text_encode, text_desc, csize - 4);
+//
+//		offset        = 4 + text_desc_len + id3v2_nul_size (text_encode);
+//		text          = &data[pos + offset]; /* <full text string according to encoding> */
+//
+//		word = id3v24_text_to_utf8 (text_encode, text, csize - offset);
+//
+//		if (!tracker_is_empty_string (word)) {
+//			g_strstrip (word);
+//			g_free (tag->comment);
+//			tag->comment = word;
+//		} else {
+//			g_free (word);
+//		}
 		break;
 	}
 
@@ -2292,33 +2292,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 			tracker_sparql_builder_graph_close (preupdate);
 		}
 		tracker_sparql_builder_insert_close (preupdate);
-
-		if (md.track_count > 0) {
-			tracker_sparql_builder_delete_open (preupdate, NULL);
-			tracker_sparql_builder_subject_iri (preupdate, md.album_uri);
-			tracker_sparql_builder_predicate (preupdate, "ivi:albumtrackcount");
-			tracker_sparql_builder_object_variable (preupdate, "unknown");
-			tracker_sparql_builder_delete_close (preupdate);
-			tracker_sparql_builder_where_open (preupdate);
-			tracker_sparql_builder_subject_iri (preupdate, md.album_uri);
-			tracker_sparql_builder_predicate (preupdate, "ivi:albumtrackcount");
-			tracker_sparql_builder_object_variable (preupdate, "unknown");
-			tracker_sparql_builder_where_close (preupdate);
-
-			tracker_sparql_builder_insert_open (preupdate, NULL);
-			if (graph) {
-				tracker_sparql_builder_graph_open (preupdate, graph);
-			}
-
-			tracker_sparql_builder_subject_iri (preupdate, md.album_uri);
-			tracker_sparql_builder_predicate (preupdate, "ivi:albumtrackcount");
-			tracker_sparql_builder_object_int64 (preupdate, md.track_count);
-
-			if (graph) {
-				tracker_sparql_builder_graph_close (preupdate);
-			}
-			tracker_sparql_builder_insert_close (preupdate);
-		}
 	}
 
 	tracker_sparql_builder_predicate (metadata, "a");
@@ -2355,16 +2328,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	if (md.genre) {
 		tracker_sparql_builder_predicate (metadata, "ivi:trackgenre");
 		tracker_sparql_builder_object_unvalidated (metadata, md.genre);
-	}
-
-	if (md.copyright) {
-		tracker_sparql_builder_predicate (metadata, "ivi:trackcopyright");
-		tracker_sparql_builder_object_unvalidated (metadata, md.copyright);
-	}
-
-	if (md.comment) {
-		tracker_sparql_builder_predicate (metadata, "ivi:trackcomment");
-		tracker_sparql_builder_object_unvalidated (metadata, md.comment);
 	}
 
 	if (md.track_number > 0) {
