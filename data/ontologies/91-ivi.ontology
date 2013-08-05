@@ -14,6 +14,7 @@ ivi:Artist a rdfs:Class .
 ivi:Album a rdfs:Class .
 ivi:Track a rdfs:Class .
 ivi:Image a rdfs:Class .
+ivi:Video a rdfs:Class .
 ivi:File a rdfs:Class .
 
 #
@@ -239,6 +240,16 @@ ivi:imagefile a rdf:Property ;
 	rdfs:domain ivi:Image ;
 	nrl:maxCardinality 1 ;
 	rdfs:range ivi:File .
+
+#
+# Video properties
+#
+
+ivi:videotitle a rdf:Property ;
+	rdfs:domain ivi:Video ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
 #
 # File properties
 #

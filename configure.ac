@@ -199,6 +199,8 @@ NETWORK_MANAGER_REQUIRED=0.8
 GSTREAMER_REQUIRED=0.10.31
 GUPNP_DLNA_REQUIRED=0.9.4
 LIBPNG_REQUIRED=0.89
+LIBAV_REQUIRED=0.1
+#53.21.0
 
 # 3.6.11 for sqlite_backup API
 # 3.6.16 to fix test failures
@@ -2364,6 +2366,47 @@ AM_CONDITIONAL(HAVE_LIBGIF_IVI, test "x$have_libgif_ivi" = "xyes")
 CFLAGS="$OLD_CFLAGS"
 LIBS="$OLD_LIBS"
 
+##################################################################
+# Check for tracker-extract: libav-ivi
+##################################################################
+
+# FIXME: This should be package based. Unfortunately in several main
+# distros, it is not.
+
+OLD_CFLAGS="$CFLAGS"
+OLD_LIBS="$LIBS"
+CFLAGS=""
+LIBS=""
+
+AC_ARG_ENABLE(libav-ivi,
+              AS_HELP_STRING([--enable-libav-ivi],
+                             [enable extractor for libav-IVI [[default=auto]]]),,
+              [enable_libav_ivi=auto])
+
+if test "x$enable_libav_ivi" != "xno" ; then
+   PKG_CHECK_MODULES(LIBAV,
+                     [libavformat, libavutil],
+                     [have_libav_ivi=yes],
+                     [have_libav_ivi=no])
+
+   AC_SUBST(LIBAV_CFLAGS)
+   AC_SUBST(LIBAV_LIBS)
+
+   if test "x$have_libav_ivi" = "xyes"; then
+      AC_DEFINE(HAVE_LIBAV_IVI, [], [Define if we have libav-ivi])
+   fi
+else
+   have_libav_ivi="no  (disabled)"
+fi
+
+if test "x$enable_libav_ivi" = "xyes"; then
+   if test "x$have_libav_ivi" != "xyes"; then
+      AC_MSG_ERROR([Couldn't find libav >= $LIBAV_REQUIRED.])
+   fi
+fi
+
+AM_CONDITIONAL(HAVE_LIBAV_IVI, test "x$have_libav_ivi" = "xyes")
+
 ####################################################################
 # Check for tracker-extract: ps
 ####################################################################
@@ -2785,6 +2828,7 @@ IVI-specific extractors:
 	Include PNG-faster-IVI                  $enable_png_faster_ivi
 	Include JPEG-IVI extractor              $have_jpeg_ivi
 	Include GIF-IVI extractor               $have_libgif_ivi
+	Include libav-IVI extractor             $have_libav_ivi
 
 Data Miners:
 

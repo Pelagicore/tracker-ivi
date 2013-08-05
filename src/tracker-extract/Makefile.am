@@ -44,6 +44,7 @@ rules_in_files = \
 	10-xps.rule.in \
 	11-iso.rule.in \
 	11-msoffice-xml.rule.in \
+	14-libav-ivi.rule.in \
 	15-gstreamer-guess.rule.in \
 	15-playlist.rule.in \
 	90-gstreamer-generic.rule.in \
@@ -210,6 +211,11 @@ endif
 if HAVE_PNG_FASTER_IVI
 modules_LTLIBRARIES += libextract-png-faster-ivi.la
 rules_DATA += 07-png-faster-ivi.rule
+endif
+
+if HAVE_LIBAV_IVI
+modules_LTLIBRARIES += libextract-libav-ivi.la
+rules_DATA += 14-libav-ivi.rule
 endif
 
 # ABW
@@ -598,6 +604,20 @@ libextract_gif_ivi_la_LIBADD = \
 	$(BUILD_LIBS) \
 	$(TRACKER_EXTRACT_MODULES_LIBS) \
 	$(LIBGIF_IVI_LIBS)
+
+# libav-ivi
+libextract_libav_ivi_la_SOURCES = tracker-extract-libav-ivi.c
+libextract_libav_ivi_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBAV_CFLAGS)
+libextract_libav_ivi_la_LDFLAGS = $(module_flags)
+libextract_libav_ivi_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS) \
+	$(LIBAV_LIBS) \
+
 #
 # Binaries
 #
