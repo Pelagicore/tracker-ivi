@@ -616,7 +616,7 @@ libextract_libav_ivi_la_LIBADD = \
 	$(top_builddir)/src/libtracker-common/libtracker-common.la \
 	$(BUILD_LIBS) \
 	$(TRACKER_EXTRACT_MODULES_LIBS) \
-	$(LIBAV_LIBS) \
+	$(LIBAV_LIBS)
 
 #
 # Binaries
