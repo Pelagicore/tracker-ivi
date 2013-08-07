@@ -42,6 +42,7 @@
 #include <libtracker-common/tracker-crc32.h>
 
 #include "tracker-db-journal.h"
+#include "tracker-db-config.h"
 
 #ifndef DISABLE_JOURNAL
 
@@ -119,6 +120,8 @@ static JournalWriter writer = {0};
 static JournalWriter ontology_writer = {0};
 
 static TransactionFormat current_transaction_format;
+
+static TrackerDBConfig *db_config = NULL;
 
 #if GLIB_CHECK_VERSION (2, 24, 2)
 static gboolean tracker_db_journal_rotate (GError **error);
@@ -559,20 +562,24 @@ tracker_db_journal_init (const gchar  *filename,
                          gboolean      truncate,
                          GError      **error)
 {
-	gboolean ret;
-	const gchar *filename_use;
-	gchar *filename_free = NULL;
-	GError *n_error = NULL;
+	      gboolean  ret;
+	const gchar    *filename_use;
+	      gchar    *filename_free = NULL;
+	      gchar    *data_dir;
+	      GError   *n_error = NULL;
 
 	g_return_val_if_fail (writer.journal == 0, FALSE);
 
 	if (filename == NULL) {
+		if (!TRACKER_IS_DB_CONFIG (db_config))
+			db_config = tracker_db_config_new ();
+
 		/* Used mostly for testing */
-		filename_use = g_build_filename (g_get_user_data_dir (),
-		                                 "tracker",
-		                                 "data",
-		                                 TRACKER_DB_JOURNAL_FILENAME,
-		                                 NULL);
+		data_dir = tracker_db_config_get_user_data_dir_safe (db_config);
+		filename_use = g_build_filename (data_dir,
+						 TRACKER_DB_JOURNAL_FILENAME,
+						 NULL);
+		g_free (data_dir);
 		filename_free = (gchar *) filename_use;
 	} else {
 		filename_use = filename;
@@ -592,17 +599,21 @@ tracker_db_journal_init (const gchar  *filename,
 static gboolean
 db_journal_ontology_init (GError **error)
 {
-	gboolean ret;
-	gchar *filename;
-	GError *n_error = NULL;
+	gboolean  ret;
+	gchar    *filename;
+	gchar    *data_dir;
+	GError   *n_error = NULL;
 
 	g_return_val_if_fail (ontology_writer.journal == 0, FALSE);
 
-	filename = g_build_filename (g_get_user_data_dir (),
-	                             "tracker",
-	                             "data",
+	if (!TRACKER_IS_DB_CONFIG (db_config))
+		db_config = tracker_db_config_new ();
+
+	data_dir = tracker_db_config_get_user_data_dir_safe (db_config);
+	filename = g_build_filename (data_dir,
 	                             TRACKER_DB_JOURNAL_ONTOLOGY_FILENAME,
 	                             NULL);
+	g_free (data_dir);
 
 	ret = db_journal_writer_init (&ontology_writer, FALSE, FALSE, filename, &n_error);
 
@@ -644,6 +655,9 @@ tracker_db_journal_shutdown (GError **error)
 {
 	GError *n_error = NULL;
 	gboolean ret;
+
+	if (db_config)
+		g_clear_object (&db_config);
 
 	ret = db_journal_writer_shutdown (&writer, &n_error);
 
@@ -1350,8 +1364,9 @@ db_journal_reader_init (JournalReader  *jreader,
                         const gchar    *filename,
                         GError        **error)
 {
-	gchar *filename_used;
-	gchar *filename_open;
+	gchar  *filename_used;
+	gchar  *filename_open;
+	gchar  *data_dir;
 	GError *n_error = NULL;
 
 	g_return_val_if_fail (jreader->file == NULL, FALSE);
@@ -1360,11 +1375,14 @@ db_journal_reader_init (JournalReader  *jreader,
 	if (G_UNLIKELY (filename)) {
 		filename_used = g_strdup (filename);
 	} else {
-		filename_used = g_build_filename (g_get_user_data_dir (),
-		                                  "tracker",
-		                                  "data",
+		if (!TRACKER_IS_DB_CONFIG (db_config))
+			db_config = tracker_db_config_new ();
+
+		data_dir = tracker_db_config_get_user_data_dir_safe (db_config);
+		filename_used = g_build_filename (data_dir,
 		                                  TRACKER_DB_JOURNAL_FILENAME,
 		                                  NULL);
+		g_free (data_dir);
 	}
 
 	jreader->filename = filename_used;
@@ -1422,19 +1440,23 @@ gboolean
 tracker_db_journal_reader_ontology_init (const gchar  *filename,
                                          GError      **error)
 {
-	gchar *filename_used;
-	gboolean result;
-	GError *n_error = NULL;
+	gchar    *filename_used;
+	gchar    *data_dir;
+	gboolean  result;
+	GError   *n_error = NULL;
 
 	/* Used mostly for testing */
 	if (G_UNLIKELY (filename)) {
 		filename_used = g_strdup (filename);
 	} else {
-		filename_used = g_build_filename (g_get_user_data_dir (),
-		                                  "tracker",
-		                                  "data",
+		if (!TRACKER_IS_DB_CONFIG (db_config))
+			db_config = tracker_db_config_new ();
+
+		data_dir = tracker_db_config_get_user_data_dir_safe (db_config);
+		filename_used = g_build_filename (data_dir,
 		                                  TRACKER_DB_JOURNAL_ONTOLOGY_FILENAME,
 		                                  NULL);
+		g_free (data_dir);
 	}
 
 	result = tracker_db_journal_reader_init (filename_used, &n_error);
@@ -1535,6 +1557,9 @@ db_journal_reader_shutdown (JournalReader *jreader)
 	jreader->p_id = 0;
 	jreader->o_id = 0;
 	jreader->object = NULL;
+
+	if (db_config)
+		g_clear_object (&db_config);
 
 	return TRUE;
 }

@@ -42,6 +42,7 @@
 #include "tracker-db-interface-sqlite.h"
 #include "tracker-db-manager.h"
 #include "tracker-db-journal.h"
+#include "tracker-db-config.h"
 #include "tracker-namespace.h"
 #include "tracker-ontologies.h"
 #include "tracker-ontology.h"
@@ -78,6 +79,7 @@ static gboolean  reloading = FALSE;
 #ifndef DISABLE_JOURNAL
 static gboolean  in_journal_replay;
 #endif
+static TrackerDBConfig *db_config = NULL;
 
 typedef struct {
 	const gchar *from;
@@ -3508,10 +3510,13 @@ static void
 write_ontologies_gvdb (gboolean   overwrite,
                        GError   **error)
 {
-	gchar *filename;
+	gchar *cache_dir, *filename;
 
-	filename = g_build_filename (g_get_user_cache_dir (),
-	                             "tracker",
+	if (!TRACKER_IS_DB_CONFIG (db_config))
+		db_config = tracker_db_config_new ();
+
+	cache_dir = tracker_db_config_get_user_cache_dir_safe (db_config);
+	filename = g_build_filename (cache_dir,
 	                             "ontologies.gvdb",
 	                             NULL);
 
@@ -3520,21 +3525,27 @@ write_ontologies_gvdb (gboolean   overwrite,
 	}
 
 	g_free (filename);
+	g_free (cache_dir);
 }
 
 static void
 load_ontologies_gvdb (GError **error)
 {
-	gchar *filename;
+	gchar *cache_dir, *filename;
 
-	filename = g_build_filename (g_get_user_cache_dir (),
-	                             "tracker",
+	if (!TRACKER_IS_DB_CONFIG (db_config))
+		db_config = tracker_db_config_new ();
+
+	cache_dir = tracker_db_config_get_user_cache_dir_safe (db_config);
+
+	filename = g_build_filename (cache_dir,
 	                             "ontologies.gvdb",
 	                             NULL);
 
 	tracker_ontologies_load_gvdb (filename, error);
 
 	g_free (filename);
+	g_free (cache_dir);
 }
 
 #if HAVE_TRACKER_FTS
@@ -4615,6 +4626,10 @@ tracker_data_manager_shutdown (void)
 		tracker_locale_shutdown ();
 	}
 	tracker_data_update_shutdown ();
+
+	if (db_config) {
+		g_clear_object (&db_config);
+	}
 
 	initialized = FALSE;
 }

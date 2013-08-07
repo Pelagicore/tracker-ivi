@@ -47,6 +47,7 @@
 #include "tracker-db-interface-sqlite.h"
 #include "tracker-db-interface.h"
 #include "tracker-data-manager.h"
+#include "tracker-db-config.h"
 
 /* ZLib buffer settings */
 #define ZLIB_BUF_SIZE                 8192
@@ -161,6 +162,7 @@ static gpointer              db_type_enum_class_pointer;
 static TrackerDBManagerFlags old_flags = 0;
 static guint                 s_cache_size;
 static guint                 u_cache_size;
+static TrackerDBConfig      *db_config;
 
 #if GLIB_CHECK_VERSION (2,31,0)
 static GPrivate              interface_data_key = G_PRIVATE_INIT ((GDestroyNotify)g_object_unref);
@@ -784,17 +786,15 @@ tracker_db_manager_init_locations (void)
 	const gchar *dir;
 	guint i;
 
-	user_data_dir = g_build_filename (g_get_user_data_dir (),
-	                                  "tracker",
-	                                  "data",
-	                                  NULL);
+	if (!TRACKER_IS_DB_CONFIG (db_config))
+		db_config = tracker_db_config_new ();
+
+	user_data_dir = tracker_db_config_get_user_data_dir_safe (db_config);
 
 	/* For DISABLE_JOURNAL case we should use g_get_user_data_dir here. For now
 	 * keeping this as-is */
 
-	data_dir = g_build_filename (g_get_user_cache_dir (),
-	                             "tracker",
-	                             NULL);
+	data_dir = tracker_db_config_get_user_cache_dir_safe (db_config);
 
 	for (i = 1; i < G_N_ELEMENTS (dbs); i++) {
 		dir = location_to_directory (dbs[i].location);
@@ -848,15 +848,15 @@ tracker_db_manager_init (TrackerDBManagerFlags   flags,
                          const gchar            *busy_operation,
                          GError                **error)
 {
-	GType etype;
-	TrackerDBVersion version;
-	const gchar *dir;
-	gboolean need_reindex;
-	guint i;
-	int in_use_file;
-	gboolean loaded = FALSE;
-	TrackerDBInterface *resources_iface;
-	GError *internal_error = NULL;
+	      GType               etype;
+	      TrackerDBVersion    version;
+	const gchar              *dir;
+	      gboolean            need_reindex;
+	      guint               i;
+	      gint                in_use_file;
+	      gboolean            loaded           = FALSE;
+	      TrackerDBInterface *resources_iface;
+	      GError             *internal_error   = NULL;
 
 	/* First set defaults for return values */
 	if (first_time) {
@@ -886,21 +886,17 @@ tracker_db_manager_init (TrackerDBManagerFlags   flags,
 
 	old_flags = flags;
 
+	if (!TRACKER_IS_DB_CONFIG (db_config))
+		db_config = tracker_db_config_new ();
+
 	g_free (user_data_dir);
-	user_data_dir = g_build_filename (g_get_user_data_dir (),
-	                                  "tracker",
-	                                  "data",
-	                                  NULL);
+	user_data_dir = tracker_db_config_get_user_data_dir_safe (db_config);
 
 	g_free (data_dir);
-	data_dir = g_build_filename (g_get_user_cache_dir (),
-	                             "tracker",
-	                             NULL);
+	data_dir = tracker_db_config_get_user_cache_dir_safe (db_config);
 
 	g_free (in_use_filename);
-	in_use_filename = g_build_filename (g_get_user_data_dir (),
-	                                    "tracker",
-	                                    "data",
+	in_use_filename = g_build_filename (user_data_dir,
 	                                    IN_USE_FILENAME,
 	                                    NULL);
 
@@ -1034,9 +1030,10 @@ tracker_db_manager_init (TrackerDBManagerFlags   flags,
 		g_message ("Loading databases files...");
 
 #ifndef DISABLE_JOURNAL
-		journal_filename = g_build_filename (g_get_user_data_dir (),
-		                                     "tracker",
-		                                     "data",
+		if (!TRACKER_IS_DB_CONFIG (db_config))
+			db_config = tracker_db_config_new ();
+
+		journal_filename = g_build_filename (user_data_dir,
 		                                     TRACKER_DB_JOURNAL_FILENAME,
 		                                     NULL);
 
@@ -1316,6 +1313,10 @@ tracker_db_manager_shutdown (void)
 
 	g_free (in_use_filename);
 	in_use_filename = NULL;
+
+	if (db_config) {
+		g_object_unref (db_config);
+	}
 }
 
 void
@@ -1557,10 +1558,16 @@ tracker_db_manager_has_enough_space  (void)
 inline static gchar *
 get_first_index_filename (void)
 {
-	return g_build_filename (g_get_user_cache_dir (),
-	                         "tracker",
-	                         FIRST_INDEX_FILENAME,
-	                         NULL);
+	gchar *cache_dir, *filename;
+	if (!TRACKER_IS_DB_CONFIG (db_config))
+		db_config = tracker_db_config_new ();
+
+	cache_dir = tracker_db_config_get_user_cache_dir_safe (db_config);
+	filename = g_build_filename (cache_dir,
+	                             FIRST_INDEX_FILENAME,
+	                             NULL);
+	g_free (cache_dir);
+	return filename;
 }
 
 /**
@@ -1629,10 +1636,16 @@ tracker_db_manager_set_first_index_done (gboolean done)
 inline static gchar *
 get_last_crawl_filename (void)
 {
-	return g_build_filename (g_get_user_cache_dir (),
-	                         "tracker",
-	                         LAST_CRAWL_FILENAME,
-	                         NULL);
+	gchar *cache_dir, *filename;
+	if (!TRACKER_IS_DB_CONFIG (db_config))
+		db_config = tracker_db_config_new ();
+
+	cache_dir = tracker_db_config_get_user_cache_dir_safe (db_config);
+	filename = g_build_filename (cache_dir,
+	                             LAST_CRAWL_FILENAME,
+	                             NULL);
+	g_free (cache_dir);
+	return filename;
 }
 
 /**
@@ -1713,10 +1726,16 @@ tracker_db_manager_set_last_crawl_done (gboolean done)
 inline static gchar *
 get_need_mtime_check_filename (void)
 {
-	return g_build_filename (g_get_user_cache_dir (),
-	                         "tracker",
-	                         NEED_MTIME_CHECK_FILENAME,
-	                         NULL);
+	gchar *cache_dir, *filename;
+	if (!TRACKER_IS_DB_CONFIG (db_config))
+		db_config = tracker_db_config_new ();
+
+	cache_dir = tracker_db_config_get_user_cache_dir_safe (db_config);
+	filename =  g_build_filename (cache_dir,
+	                              NEED_MTIME_CHECK_FILENAME,
+	                              NULL);
+	g_free (cache_dir);
+	return filename;
 }
 
 /**
