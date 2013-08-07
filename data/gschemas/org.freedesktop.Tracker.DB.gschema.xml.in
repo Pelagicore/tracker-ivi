@@ -29,5 +29,15 @@ Boston, MA  02110-1301, USA.
       <_summary>Location of journal pieces</_summary>
       <_description>Where to store a journal chunk when it hits the max size.</_description>
     </key>
+    <key name="user-data-dir" type="s">
+      <default>''</default>
+      <_summary>User data dir</_summary>
+      <_description>Set to override the user data dir location, unset to use XDG_DATA_HOME</_description>
+    </key>
+    <key name="user-cache-dir" type="s">
+      <default>''</default>
+      <_summary>User cache dir</_summary>
+      <_description>Set to override the user cache dir location, unset to use XDG_CACHE_HOME</_description>
+    </key>
   </schema>
 </schemalist>

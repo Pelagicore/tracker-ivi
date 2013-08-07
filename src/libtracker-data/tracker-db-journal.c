@@ -42,6 +42,7 @@
 #include <libtracker-common/tracker-crc32.h>
 
 #include "tracker-db-journal.h"
+#include "tracker-db-config.h"
 
 #ifndef DISABLE_JOURNAL
 
@@ -119,6 +120,8 @@ static JournalWriter writer = {0};
 static JournalWriter ontology_writer = {0};
 
 static TransactionFormat current_transaction_format;
+
+static TrackerDBConfig *db_config = NULL;
 
 #if GLIB_CHECK_VERSION (2, 24, 2)
 static gboolean tracker_db_journal_rotate (GError **error);
@@ -567,12 +570,13 @@ tracker_db_journal_init (const gchar  *filename,
 	g_return_val_if_fail (writer.journal == 0, FALSE);
 
 	if (filename == NULL) {
+		if (!TRACKER_IS_DB_CONFIG (db_config))
+			db_config = tracker_db_config_new ();
+
 		/* Used mostly for testing */
-		filename_use = g_build_filename (g_get_user_data_dir (),
-		                                 "tracker",
-		                                 "data",
-		                                 TRACKER_DB_JOURNAL_FILENAME,
-		                                 NULL);
+		filename_use = g_build_filename (tracker_db_config_get_user_data_dir_safe (db_config),
+						 TRACKER_DB_JOURNAL_FILENAME,
+						 NULL);
 		filename_free = (gchar *) filename_use;
 	} else {
 		filename_use = filename;
@@ -598,9 +602,10 @@ db_journal_ontology_init (GError **error)
 
 	g_return_val_if_fail (ontology_writer.journal == 0, FALSE);
 
-	filename = g_build_filename (g_get_user_data_dir (),
-	                             "tracker",
-	                             "data",
+	if (!TRACKER_IS_DB_CONFIG (db_config))
+		db_config = tracker_db_config_new ();
+
+	filename = g_build_filename (tracker_db_config_get_user_data_dir_safe (db_config),
 	                             TRACKER_DB_JOURNAL_ONTOLOGY_FILENAME,
 	                             NULL);
 
@@ -1360,9 +1365,10 @@ db_journal_reader_init (JournalReader  *jreader,
 	if (G_UNLIKELY (filename)) {
 		filename_used = g_strdup (filename);
 	} else {
-		filename_used = g_build_filename (g_get_user_data_dir (),
-		                                  "tracker",
-		                                  "data",
+		if (!TRACKER_IS_DB_CONFIG (db_config))
+			db_config = tracker_db_config_new ();
+
+		filename_used = g_build_filename (tracker_db_config_get_user_data_dir_safe (db_config),
 		                                  TRACKER_DB_JOURNAL_FILENAME,
 		                                  NULL);
 	}
@@ -1430,9 +1436,10 @@ tracker_db_journal_reader_ontology_init (const gchar  *filename,
 	if (G_UNLIKELY (filename)) {
 		filename_used = g_strdup (filename);
 	} else {
-		filename_used = g_build_filename (g_get_user_data_dir (),
-		                                  "tracker",
-		                                  "data",
+		if (!TRACKER_IS_DB_CONFIG (db_config))
+			db_config = tracker_db_config_new ();
+
+		filename_used = g_build_filename (tracker_db_config_get_user_data_dir_safe (db_config),
 		                                  TRACKER_DB_JOURNAL_ONTOLOGY_FILENAME,
 		                                  NULL);
 	}
