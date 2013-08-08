@@ -255,7 +255,27 @@ tracker_db_config_get_user_cache_dir_safe (TrackerDBConfig *config)
 		g_debug ("Setting cache dir based on user settings");
 	}
 	return cache_dir;
+}
 
+gchar *
+tracker_db_config_get_ontologies_dir_safe (TrackerDBConfig *config)
+{
+	gchar *ontologies_dir = NULL;
+
+	if TRACKER_IS_DB_CONFIG (config)
+		ontologies_dir = tracker_db_config_get_ontologies_dir (config);
+
+	if (ontologies_dir == NULL || g_strcmp0 (ontologies_dir, "") == 0) {
+		g_free (ontologies_dir);
+		ontologies_dir = g_build_filename (SHAREDIR,
+		                                   "tracker",
+		                                   "ontologies",
+		                                   NULL);
+		g_debug ("Setting default ontologies dir");
+	} else {
+		g_debug ("Setting ontologies dir based on user settings");
+	}
+	return ontologies_dir;
 }
 
 gboolean
@@ -301,6 +321,14 @@ tracker_db_config_get_user_cache_dir (TrackerDBConfig *config)
 	return g_settings_get_string (G_SETTINGS (config), "user-cache-dir");
 }
 
+gchar *
+tracker_db_config_get_ontologies_dir (TrackerDBConfig *config)
+{
+	g_return_val_if_fail (TRACKER_IS_DB_CONFIG (config), "");
+
+	return g_settings_get_string (G_SETTINGS (config), "ontologies-dir");
+}
+
 void
 tracker_db_config_set_journal_chunk_size (TrackerDBConfig *config,
                                           gint             value)
@@ -339,4 +367,14 @@ tracker_db_config_set_user_cache_dir (TrackerDBConfig *config,
 
 	g_settings_set_string (G_SETTINGS (config), "user-cache-dir", value);
 	g_object_notify (G_OBJECT (config), "user-cache-dir");
+}
+
+void
+tracker_db_config_set_ontologies_dir (TrackerDBConfig *config,
+                                      const gchar     *value)
+{
+	g_return_if_fail (TRACKER_IS_DB_CONFIG (config));
+
+	g_settings_set_string (G_SETTINGS (config), "ontologies-dir", value);
+	g_object_notify (G_OBJECT (config), "ontologies-dir");
 }

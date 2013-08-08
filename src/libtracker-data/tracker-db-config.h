@@ -60,8 +60,10 @@ gint             tracker_db_config_get_journal_chunk_size         (TrackerDBConf
 gchar *          tracker_db_config_get_journal_rotate_destination (TrackerDBConfig *config);
 gchar *          tracker_db_config_get_user_data_dir              (TrackerDBConfig *config);
 gchar *          tracker_db_config_get_user_cache_dir             (TrackerDBConfig *config);
+gchar *          tracker_db_config_get_ontologies_dir             (TrackerDBConfig *config);
 gchar *          tracker_db_config_get_user_data_dir_safe         (TrackerDBConfig *config);
 gchar *          tracker_db_config_get_user_cache_dir_safe        (TrackerDBConfig *config);
+gchar *          tracker_db_config_get_ontologies_dir_safe            (TrackerDBConfig *config);
 
 void             tracker_db_config_set_journal_chunk_size         (TrackerDBConfig *config,
                                                                    gint             value);
@@ -70,6 +72,8 @@ void             tracker_db_config_set_journal_rotate_destination (TrackerDBConf
 void             tracker_db_config_set_user_data_dir              (TrackerDBConfig *config,
                                                                    const gchar     *value);
 void             tracker_db_config_set_user_cache_dir             (TrackerDBConfig *config,
+                                                                   const gchar     *value);
+void             tracker_db_config_set_ontologies_dir             (TrackerDBConfig *config,
                                                                    const gchar     *value);
 
 G_END_DECLS

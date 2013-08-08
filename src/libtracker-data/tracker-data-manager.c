@@ -50,6 +50,8 @@
 #include "tracker-sparql-query.h"
 #include "tracker-data-query.h"
 
+#include "tracker-db-config.h"
+
 #define XSD_PREFIX TRACKER_XSD_PREFIX
 #define RDF_PREFIX TRACKER_RDF_PREFIX
 #define RDF_PROPERTY RDF_PREFIX "Property"
@@ -73,11 +75,11 @@
 
 #define ZLIBBUFSIZ 8192
 
-static gchar    *ontologies_dir;
-static gboolean  initialized;
-static gboolean  reloading = FALSE;
+static gchar           *ontologies_dir;
+static gboolean         initialized;
+static gboolean         reloading = FALSE;
 #ifndef DISABLE_JOURNAL
-static gboolean  in_journal_replay;
+static gboolean         in_journal_replay;
 #endif
 static TrackerDBConfig *db_config = NULL;
 
@@ -3748,14 +3750,14 @@ tracker_data_manager_init (TrackerDBManagerFlags   flags,
 		}
 	}
 #endif /* DISABLE_JOURNAL */
+	if (!TRACKER_IS_DB_CONFIG (db_config))
+		db_config = tracker_db_config_new ();
 
 	env_path = g_getenv ("TRACKER_DB_ONTOLOGIES_DIR");
 
+	g_free (ontologies_dir);
 	if (G_LIKELY (!env_path)) {
-		ontologies_dir = g_build_filename (SHAREDIR,
-		                                   "tracker",
-		                                   "ontologies",
-		                                   NULL);
+		ontologies_dir = tracker_db_config_get_ontologies_dir_safe (db_config);
 	} else {
 		ontologies_dir = g_strdup (env_path);
 	}
