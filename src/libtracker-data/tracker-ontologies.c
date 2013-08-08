@@ -245,12 +245,16 @@ tracker_ontologies_get_namespaces (guint *length)
 
 		namespace_uris = gvdb_table_list (gvdb_namespaces_table, "");
 
-		for (i = 0; namespace_uris[i]; i++) {
-			TrackerNamespace *namespace;
+		if (namespace_uris != NULL) {
+			for (i = 0; namespace_uris[i]; i++) {
+				TrackerNamespace *namespace;
 
-			namespace = tracker_ontologies_get_namespace_by_uri (namespace_uris[i]);
+				namespace = tracker_ontologies_get_namespace_by_uri (namespace_uris[i]);
 
-			g_ptr_array_add (namespaces, g_object_ref (namespace));
+				g_ptr_array_add (namespaces, g_object_ref (namespace));
+			}
+		} else {
+			g_warning ("No namespaces found!");
 		}
 
 		g_strfreev (namespace_uris);
@@ -280,13 +284,17 @@ tracker_ontologies_get_classes (guint *length)
 		gint i;
 
 		class_uris = gvdb_table_list (gvdb_classes_table, "");
+		
+		if (class_uris != NULL) {
+			for (i = 0; class_uris[i]; i++) {
+				TrackerClass *class;
 
-		for (i = 0; class_uris[i]; i++) {
-			TrackerClass *class;
+				class = tracker_ontologies_get_class_by_uri (class_uris[i]);
 
-			class = tracker_ontologies_get_class_by_uri (class_uris[i]);
-
-			g_ptr_array_add (classes, g_object_ref (class));
+				g_ptr_array_add (classes, g_object_ref (class));
+			}
+		} else {
+			g_warning ("No classes found!");
 		}
 
 		g_strfreev (class_uris);
@@ -304,13 +312,16 @@ tracker_ontologies_get_properties (guint *length)
 		gint i;
 
 		property_uris = gvdb_table_list (gvdb_properties_table, "");
+		if (property_uris != NULL) {
+			for (i = 0; property_uris[i]; i++) {
+				TrackerProperty *property;
 
-		for (i = 0; property_uris[i]; i++) {
-			TrackerProperty *property;
+				property = tracker_ontologies_get_property_by_uri (property_uris[i]);
 
-			property = tracker_ontologies_get_property_by_uri (property_uris[i]);
-
-			g_ptr_array_add (properties, g_object_ref (property));
+				g_ptr_array_add (properties, g_object_ref (property));
+			}
+		} else {
+			g_warning("No properties found!");
 		}
 
 		g_strfreev (property_uris);
