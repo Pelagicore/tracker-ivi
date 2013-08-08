@@ -39,5 +39,10 @@ Boston, MA  02110-1301, USA.
       <_summary>User cache dir</_summary>
       <_description>Set to override the user cache dir location, unset to use XDG_CACHE_HOME</_description>
     </key>
+    <key name="ontologies-dir" type="s">
+      <default>''</default>
+      <_summary>Ontologies dir</_summary>
+      <_description>Set to override the ontologies dir location, unset to use -DSHAREDIR pre-processor flag, TRACKER_DB_ONTOLOGIES_DIR has precedence over this setting</_description>
+    </key>
   </schema>
 </schemalist>
