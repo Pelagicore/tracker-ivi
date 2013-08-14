@@ -26,6 +26,13 @@ The default configuration of Tracker-IVI has the following dependencies:
 | libexif       | >= 0.6        |
 | GStreamer     | >= 1.0.1      |
 | SQLite        | >= 3.7.9      |
+| valac         | >= 0.13.4     |
+| gtk-doc       | any version   |
+| uuid          | any version   |
+| libexif       | >= 0.6        |
+| libgif        | any version   |
+| libvorbis     | >= 0.22       |
+| libflac       | >= 1.2.1      |
 
 #### Installation
 With all dependencies installed, installation should be straight forward:
