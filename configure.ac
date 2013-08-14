@@ -2750,7 +2750,6 @@ AC_CONFIG_FILES([
         src/plugins/firefox/defaults/Makefile
         src/plugins/firefox/defaults/preferences/Makefile
 	src/plugins/nautilus/Makefile
-	src/vapi/Makefile
 	tests/common/Makefile
         tests/gvdb/Makefile
 	tests/libtracker-common/Makefile
