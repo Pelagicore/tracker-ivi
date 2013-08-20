@@ -10,12 +10,15 @@ ivi: a tracker:Namespace, tracker:Ontology ;
 	tracker:prefix "ivi" ;
 	nao:lastModified "2013-07-23T13:16:00Z" .
 
+ivi:File a rdfs:Class .
 ivi:Artist a rdfs:Class .
 ivi:Album a rdfs:Class .
-ivi:Track a rdfs:Class .
-ivi:Image a rdfs:Class .
-ivi:Video a rdfs:Class .
-ivi:File a rdfs:Class .
+ivi:Track a rdfs:Class ;
+	rdfs:subclassOf ivi:File .
+ivi:Image a rdfs:Class ;
+	rdfs:subclassOf ivi:File .
+ivi:Video a rdfs:Class ;
+	rdfs:subclassOf ivi:File .
 
 #
 # Artist & artist properties
@@ -52,10 +55,6 @@ ivi:albumalbumartist a rdf:Property ;
 # Track properties
 #
 
-ivi:trackfile a rdf:Property ;
-	nrl:maxCardinality 1 ;
-	rdfs:domain ivi:Track ;
-	rdfs:range ivi:File .
 
 ivi:trackname a rdf:Property ;
 	nrl:maxCardinality 1 ;
@@ -64,6 +63,7 @@ ivi:trackname a rdf:Property ;
 
 ivi:trackartist a rdf:Property ;
 	rdfs:domain ivi:Track ;
+	nrl:maxCardinality 1  ;
 	rdfs:range ivi:Artist .
 
 ivi:trackalbum a rdf:Property ;
@@ -259,13 +259,23 @@ ivi:fileLastModified a rdf:Property ;
 	nrl:maxCardinality 1 ;
 	rdfs:range xsd:dateTime .
 
+ivi:filecreated a rdf:Property ;
+    rdfs:domain ivi:File ;
+    nrl:maxCardinality 1 ;
+    rdfs:range xsd:dateTime .
+
 ivi:fileurl a rdf:Property ;
 	rdfs:domain ivi:File ;
 	nrl:maxCardinality 1 ;
 	rdfs:range xsd:string .
 
-ivi:filename a rdf:Property ;
+ivi:mimetype a rdf:Property ;
 	rdfs:domain ivi:File ;
 	nrl:maxCardinality 1 ;
 	rdfs:range xsd:string .
+
+tracker:available a rdf:Property ;
+	nrl:maxCardinality 1 ;
+	rdfs:domain ivi:File ;
+	rdfs:range xsd:boolean .
 
