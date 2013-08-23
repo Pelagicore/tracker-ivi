@@ -53,11 +53,6 @@ tracker:isOptical a rdf:Property ;
 	rdfs:domain tracker:Volume ;
 	rdfs:range xsd:boolean .
 
-tracker:available a rdf:Property ;
-	nrl:maxCardinality 1 ;
-	rdfs:domain nie:DataObject ;
-	rdfs:range xsd:boolean .
-
 tracker:writeback a rdf:Property ;
 	nrl:maxCardinality 1 ;
 	rdfs:domain rdf:Property ;
