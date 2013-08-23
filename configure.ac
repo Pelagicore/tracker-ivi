@@ -2584,7 +2584,7 @@ fi
 
 AM_CONDITIONAL(ENABLE_IVI_ONTOLOGIES, test "x$enable_ivi_ontologies" = "xyes")
 
-####################################################################
+###################################################################
 # Check whether we should exclude non-IVI ontologies
 ####################################################################
 
@@ -2820,7 +2820,7 @@ Metadata Extractors:
 
 IVI-specific settings:
 	Include IVI ontology:                   $enable_ivi_ontologies
-	Exclude non-IVI ontologies:             $enable_non_ivi_ontologies
+	Include non-IVI ontologies:             $enable_non_ivi_ontologies
 
 IVI-specific extractors:
 	Include MP3-IVI extractor               $have_mp3_ivi
