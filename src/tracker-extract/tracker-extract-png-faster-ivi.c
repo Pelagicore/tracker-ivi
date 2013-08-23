@@ -19,6 +19,8 @@
 
 #include <libtracker-extract/tracker-extract.h>
 #include <libtracker-common/tracker-common.h>
+#include <libtracker-common/tracker-date-time.h>
+#include <libtracker-common/tracker-file-utils.h>
 
 #define RFC1123_DATE_FORMAT "%d %B %Y %H:%M:%S %z"
 const guchar png_signature[8] = {0x89, 0x50, 0x4e, 0x47,
@@ -682,11 +684,20 @@ insert_metadata(PNGFileProps *file_props,
 		tracker_sparql_builder_object_unvalidated(metadata,
 				    metadata_props->model);
 	}
+	
+	tracker_sparql_builder_predicate (metadata, "ivi:filecreated");
+	if (metadata_props && metadata_props->creation_time) {
+		tracker_sparql_builder_object_unvalidated (metadata,
+		            metadata_props->creation_time);
+	} else {
+		gchar *date;
+		guint64 mtime;
 
-	tracker_guarantee_date_from_file_mtime(metadata,
-	                                        "ivi:imagedate",
-	                                        metadata_props->creation_time,
-	                                        file_props->uri);
+		mtime = tracker_file_get_mtime_uri (file_props->uri);
+		date = tracker_date_to_string ((time_t) mtime);
+		tracker_sparql_builder_object_unvalidated (metadata, date);
+		g_free(date);
+	}
 
 	tracker_guarantee_title_from_file(metadata,
 	                                   "ivi:imagetitle",
