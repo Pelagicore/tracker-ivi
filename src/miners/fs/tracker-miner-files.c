@@ -1967,6 +1967,7 @@ miner_files_add_to_datasource (TrackerMinerFiles    *mf,
 	tracker_sparql_builder_predicate (sparql, "a");
 	tracker_sparql_builder_object (sparql, "ivi:File");
 
+	/* FIXME: add this to ivi ontology if needed */
 	tracker_sparql_builder_predicate (sparql, "nie:dataSource");
 	tracker_sparql_builder_object_iri (sparql, removable_device_urn);
 
@@ -2356,6 +2357,7 @@ process_file_cb (GObject      *object,
 	time_ = g_file_info_get_attribute_uint64 (file_info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
 	tracker_sparql_builder_predicate (sparql, "ivi:fileLastModified");
 	tracker_sparql_builder_object_date (sparql, (time_t *) &time_);
+
 /*
 	time_ = g_file_info_get_attribute_uint64 (file_info, G_FILE_ATTRIBUTE_TIME_ACCESS);
 	tracker_sparql_builder_predicate (sparql, "nfo:fileLastAccessed");
@@ -2373,9 +2375,9 @@ process_file_cb (GObject      *object,
 	tracker_sparql_builder_predicate (sparql, "ivi:fileurl");
 	tracker_sparql_builder_object_string (sparql, uri);
 
-/*	tracker_sparql_builder_predicate (sparql, "nie:mimeType");
+	tracker_sparql_builder_predicate (sparql, "ivi:mimetype");
 	tracker_sparql_builder_object_string (sparql, mime_type);
-*/
+
 	miner_files_add_to_datasource (data->miner, file, sparql);
 
 	if (tracker_extract_module_manager_mimetype_is_handled (mime_type)) {
