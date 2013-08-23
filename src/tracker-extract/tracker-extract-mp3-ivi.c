@@ -2250,7 +2250,7 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	}
 
 	if (md.composer) {
-		md.composer_uri = tracker_sparql_escape_uri_printf ("urn:artist:%s", md.composer);
+		md.composer_uri = tracker_sparql_escape_uri_printf ("urn:composer:%s", md.composer);
 
 		tracker_sparql_builder_insert_open (preupdate, NULL);
 		if (graph) {
