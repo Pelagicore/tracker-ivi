@@ -23,6 +23,7 @@ rules_in_files = \
 	09-jpeg-ivi.rule.in \
 	09-mp3-ivi.rule.in \
 	09-png-faster.rule.in \
+	09-vorbis-ivi.rule.in \
 	10-abw.rule.in \
 	10-dvi.rule.in \
 	10-epub.rule.in \
@@ -216,6 +217,11 @@ endif
 if HAVE_LIBAV_IVI
 modules_LTLIBRARIES += libextract-libav-ivi.la
 rules_DATA += 14-libav-ivi.rule
+endif
+
+if HAVE_LIBVORBIS_IVI
+modules_LTLIBRARIES += libextract-vorbis-ivi.la
+rules_DATA += 09-vorbis-ivi.rule
 endif
 
 # ABW
@@ -617,6 +623,19 @@ libextract_libav_ivi_la_LIBADD = \
 	$(BUILD_LIBS) \
 	$(TRACKER_EXTRACT_MODULES_LIBS) \
 	$(LIBAV_LIBS)
+
+# vorbis-ivi
+libextract_vorbis_ivi_la_SOURCES = tracker-extract-vorbis-ivi.c
+libextract_vorbis_ivi_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBAV_CFLAGS)
+libextract_vorbis_ivi_la_LDFLAGS = $(module_flags)
+libextract_vorbis_ivi_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS) \
+	$(LIBVORBIS_IVI_LIBS)
 
 #
 # Binaries

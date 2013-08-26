@@ -2407,6 +2407,39 @@ fi
 
 AM_CONDITIONAL(HAVE_LIBAV_IVI, test "x$have_libav_ivi" = "xyes")
 
+##################################################################
+# Check for tracker-extract: vorbis-ivi
+##################################################################
+
+AC_ARG_ENABLE(libvorbis-ivi,
+              AS_HELP_STRING([--enable-libvorbis-ivi],
+                             [enable extractor for vorbis-IVI (ogg) [[default=no]]]),,
+              [enable_libvorbis_ivi=no])
+
+if test "x$enable_libvorbis_ivi" != "xno" ; then
+   PKG_CHECK_MODULES(LIBVORBIS_IVI,
+                     [vorbisfile >= $LIBVORBIS_REQUIRED],
+                     [have_libvorbis_ivi=yes],
+                     [have_libvorbis_ivi=no])
+
+   AC_SUBST(LIBVORBIS_IVI_CFLAGS)
+   AC_SUBST(LIBVORBIS_IVI_LIBS)
+
+   if test "x$have_libvorbis_ivi" = "xyes"; then
+      AC_DEFINE(HAVE_LIBVORBIS_IVI, [], [Define if we have libvorbis-ivi])
+   fi
+else
+   have_libvorbis_IVI="no  (disabled)"
+fi
+
+if test "x$enable_libvorbis_ivi" = "xyes"; then
+   if test "x$have_libvorbis_ivi" != "xyes"; then
+      AC_MSG_ERROR([Couldn't find libvorbis >= $LIBVORBIS_REQUIRED.])
+   fi
+fi
+
+AM_CONDITIONAL(HAVE_LIBVORBIS_IVI, test "x$have_libvorbis_ivi" = "xyes")
+
 ####################################################################
 # Check for tracker-extract: ps
 ####################################################################
@@ -2829,6 +2862,7 @@ IVI-specific extractors:
 	Include JPEG-IVI extractor              $have_jpeg_ivi
 	Include GIF-IVI extractor               $have_libgif_ivi
 	Include libav-IVI extractor             $have_libav_ivi
+	Include libvorbis-IVI extractor         $have_libvorbis_ivi
 
 Data Miners:
 
