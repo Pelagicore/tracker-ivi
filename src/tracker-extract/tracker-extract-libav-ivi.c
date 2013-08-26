@@ -22,13 +22,13 @@
 #include <libavformat/avformat.h>
 #include <libavutil/error.h>
 
-gchar *get_title_from_streams(AVFormatContext *ctx)
+gchar *get_property_from_streams(AVFormatContext *ctx, gchar *key)
 {
 	AVDictionaryEntry *entry = NULL;
 	int i = 0;
 	for (;i < ctx->nb_streams; i++) {
 		AVStream *s = ctx->streams[i];
-		entry = av_dict_get(s->metadata, "title", NULL, 0);
+		entry = av_dict_get(s->metadata, key, NULL, 0);
 		if (entry) {
 			return entry->value;
 		}
@@ -36,36 +36,65 @@ gchar *get_title_from_streams(AVFormatContext *ctx)
 	return NULL;
 }
 
-gchar *get_title_from_context(AVFormatContext *ctx)
+gchar *get_property_from_context(AVFormatContext *ctx, gchar *key)
 {
 	AVDictionaryEntry *entry = NULL;
-	entry = av_dict_get(ctx->metadata, "title", NULL, 0);
+	entry = av_dict_get(ctx->metadata, key, NULL, 0);
 	if (entry) {
 		return entry->value;
 	}
 	return NULL;
 }
 
-gchar *get_title(const gchar *path)
+AVFormatContext *open_context(const gchar *path)
 {
 	g_print("Path is: %s\n", path);
 	AVFormatContext *ctx = NULL;
-	char *title = NULL;
 	int ret = 0;
 	ret = avformat_open_input(&ctx, path, NULL, NULL);
 	if (ret) {
 		char err [1024];
 		av_strerror(ret, err, 1024);
-		printf("Error while opening file: %s\n", err);
-		exit(0);
+		g_warning("Error while opening file: %s\n", err);
+		if (ctx)
+			avformat_free_context(ctx);
+	}
+	return ctx;
+}
+
+gchar *get_coalesced_property(const gchar *path,
+                                    AVFormatContext *ctx,
+                                    gchar *key,
+                                    ...)
+{
+	gchar *i;
+	va_list ap;
+	va_start(ap, key);
+	gchar *value = NULL;
+
+	for (i = key; i != NULL; i = va_arg(ap, gchar*)) {
+		value = get_property_from_streams(ctx, i);
+		if (!value)
+			value = get_property_from_context(ctx, i);
+		if (value) break;
 	}
 
-	title = get_title_from_context(ctx);
-	if (!title) {
-		title = get_title_from_streams(ctx);
-	}
-	return title;
+	va_end(ap);
+	return value;
 }
+
+gchar *get_title(const gchar *path, AVFormatContext *ctx)
+{
+	return get_coalesced_property(path, ctx, "title", NULL);
+}
+
+gchar *get_date(const gchar *path, AVFormatContext *ctx)
+{
+	return get_coalesced_property(path, ctx, "date",
+	                                         "creation_time",
+	                                         NULL);
+}
+
 
 G_MODULE_EXPORT gboolean
 tracker_extract_get_metadata(TrackerExtractInfo *info)
@@ -78,6 +107,8 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 	      GError               *error = NULL;
 	      gboolean              retval = TRUE;
 	      gchar                *title = NULL;
+	      gchar                *date = NULL;
+	      AVFormatContext      *ctx = NULL;
 
 	file         = tracker_extract_info_get_file(info);
 	filename     = g_file_get_path(file);
@@ -91,20 +122,37 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 
 	av_register_all();
 
+	ctx = open_context(filename);
+
 	tracker_sparql_builder_predicate(builder, "a");
 	tracker_sparql_builder_object(builder, "ivi:Video");
 
-	if (title = get_title(filename)) {
+	if (title = get_title(filename, ctx)) {
 		tracker_sparql_builder_predicate(builder, "ivi:videotitle");
 		tracker_sparql_builder_object_unvalidated(builder, title);
+	}
+
+	tracker_sparql_builder_predicate (builder, "ivi:filecreated");
+	if (date = get_date(filename, ctx)) {
+		tracker_sparql_builder_object_unvalidated (builder,
+		            date);
+	} else {
+		guint64 mtime;
+
+		mtime = tracker_file_get_mtime_uri (uri);
+		date = tracker_date_to_string ((time_t) mtime);
+		tracker_sparql_builder_object_unvalidated (builder, date);
 	}
 
 	tracker_extract_info_set_where_clause(info, where->str);
 
 cleanup:
 	g_string_free(where, TRUE);
+	g_free(date);
 	g_free(filename);
 	if (error)
 		g_error_free(error);
+	if (ctx)
+		avformat_free_context(ctx);
 	return retval;
 }
