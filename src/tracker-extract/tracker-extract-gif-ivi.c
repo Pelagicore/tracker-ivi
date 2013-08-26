@@ -398,6 +398,20 @@ read_metadata (TrackerSparqlBuilder *preupdate,
 		g_free (gd.comment);
 	}
 
+	tracker_sparql_builder_predicate (metadata, "ivi:filecreated");
+	if (md.date) {
+		tracker_sparql_builder_object_unvalidated (metadata,
+		            md.date);
+	} else {
+		gchar *date;
+		guint64 mtime;
+
+		mtime = tracker_file_get_mtime_uri (uri);
+		date = tracker_date_to_string ((time_t) mtime);
+		tracker_sparql_builder_object_unvalidated (metadata, date);
+		g_free(date);
+	}
+
 	tracker_xmp_free (xd);
 }
 
