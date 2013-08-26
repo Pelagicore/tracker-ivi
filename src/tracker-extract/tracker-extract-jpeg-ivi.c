@@ -513,6 +513,20 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		tracker_sparql_builder_object_unvalidated (metadata, md.gps_direction);
 	}
 
+	tracker_sparql_builder_predicate (metadata, "ivi:filecreated");
+	if (metadata_props && md.date) {
+		tracker_sparql_builder_object_unvalidated (metadata,
+		            md.date);
+	} else {
+		gchar *date;
+		guint64 mtime;
+
+		mtime = tracker_file_get_mtime_uri (file_props->uri);
+		date = tracker_date_to_string ((time_t) mtime);
+		tracker_sparql_builder_object_unvalidated (metadata, date);
+		g_free(date);
+	}
+
 	jpeg_destroy_decompress (&cinfo);
 
 	tracker_exif_free (ed);
