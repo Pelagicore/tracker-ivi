@@ -470,40 +470,6 @@ id3v2tag_free (id3v2tag *tags)
 	g_free (tags->title3);
 }
 
-static gboolean
-guess_dlna_profile (gint          bitrate,
-                    gint          frequency,
-                    gint          mpeg_version,
-                    gint          layer_version,
-                    gint          n_channels,
-                    const gchar **dlna_profile,
-                    const gchar **dlna_mimetype)
-{
-	if (mpeg_version == MPEG_V1 &&
-	    layer_version == LAYER_3 &&
-	    (bitrate >= 32000 && bitrate <= 320000) &&
-	    (n_channels == 1 || n_channels == 2) &&
-	    (frequency == freq_table[0][0] ||
-	     frequency == freq_table[1][0] ||
-	     frequency == freq_table[2][0])) {
-		*dlna_profile = "MP3";
-		*dlna_mimetype = "audio/mpeg";
-		return TRUE;
-	}
-
-	if ((bitrate >= 8000 && bitrate <= 320000) &&
-	    (mpeg_version == MPEG_V1 || mpeg_version == MPEG_V2) &&
-	    (frequency == freq_table[0][0] || frequency == freq_table[0][1] ||
-	     frequency == freq_table[1][0] || frequency == freq_table[1][1] ||
-	     frequency == freq_table[2][0] || frequency == freq_table[2][1])) {
-		*dlna_profile = "MP3X";
-		*dlna_mimetype = "audio/mpeg";
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
 static char *
 read_id3v1_buffer (int     fd,
                    goffset size)
@@ -854,7 +820,6 @@ mp3_parse_header (const gchar          *data,
 	guint frame_size;
 	guint frames = 0;
 	size_t pos = 0;
-	gint n_channels;
 
 	pos = seek_pos;
 
@@ -2333,6 +2298,20 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	if (md.track_number > 0) {
 		tracker_sparql_builder_predicate (metadata, "ivi:tracktracknumber");
 		tracker_sparql_builder_object_int64 (metadata, md.track_number);
+	}
+
+	tracker_sparql_builder_predicate (metadata, "ivi:filecreated");
+	if (md.recording_time) {
+		tracker_sparql_builder_object_unvalidated (metadata,
+		            md.recording_time);
+	} else {
+		gchar *date;
+		guint64 mtime;
+
+		mtime = tracker_file_get_mtime_uri (uri);
+		date = tracker_date_to_string ((time_t) mtime);
+		tracker_sparql_builder_object_unvalidated (metadata, date);
+		g_free(date);
 	}
 
 	g_free (md.album_uri);
