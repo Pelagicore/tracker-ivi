@@ -94,45 +94,6 @@ extract_jpeg_error_exit (j_common_ptr cinfo)
 	longjmp (h->setjmp_buffer, 1);
 }
 
-static gboolean
-guess_dlna_profile (gint          width,
-                    gint          height,
-                    const gchar **dlna_profile,
-                    const gchar **dlna_mimetype)
-{
-	const gchar *profile = NULL;
-
-	if (dlna_profile) {
-		*dlna_profile = NULL;
-	}
-
-	if (dlna_mimetype) {
-		*dlna_mimetype = NULL;
-	}
-
-	if (width <= 640 && height <= 480) {
-		profile = "JPEG_SM";
-	} else if (width <= 1024 && height <= 768) {
-		profile = "JPEG_MED";
-	} else if (width <= 4096 && height <= 4096) {
-		profile = "JPEG_LRG";
-	}
-
-	if (profile) {
-		if (dlna_profile) {
-			*dlna_profile = profile;
-		}
-
-		if (dlna_mimetype) {
-			*dlna_mimetype = "image/jpeg";
-		}
-
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
 G_MODULE_EXPORT gboolean
 tracker_extract_get_metadata (TrackerExtractInfo *info)
 {
@@ -149,11 +110,10 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	goffset size;
 	gchar *filename, *uri;
 	gchar *comment = NULL;
-	const gchar *dlna_profile, *dlna_mimetype, *graph;
+	const gchar *graph;
 	GPtrArray *keywords;
 	gboolean success = TRUE;
 	GString *where;
-	guint i;
 
 	metadata = tracker_extract_info_get_metadata_builder (info);
 	preupdate = tracker_extract_info_get_preupdate_builder (info);
@@ -210,8 +170,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	marker = (struct jpeg_marker_struct *) &cinfo.marker_list;
 
 	while (marker) {
-		gchar *str;
-		gsize len;
 #ifdef HAVE_LIBIPTCDATA
 		gsize offset;
 		guint sublen;
@@ -224,9 +182,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 			break;
 
 		case JPEG_APP0 + 1:
-			str = (gchar*) marker->data;
-			len = marker->data_length;
-
 #ifdef HAVE_LIBEXIF
 			if (strncmp (EXIF_NAMESPACE, str, EXIF_NAMESPACE_LENGTH) == 0) {
 				ed = tracker_exif_new ((guchar *) marker->data, len, uri);
@@ -244,8 +199,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 			break;
 
 		case JPEG_APP0 + 13:
-			str = (gchar*) marker->data;
-			len = marker->data_length;
 #ifdef HAVE_LIBIPTCDATA
 			if (len > 0 && strncmp (PS3_NAMESPACE, str, PS3_NAMESPACE_LENGTH) == 0) {
 				offset = iptc_jpeg_ps3_find_iptc (str, len, &sublen);
@@ -511,6 +464,20 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	if (md.gps_direction) {
 		tracker_sparql_builder_predicate (metadata, "ivi:imagegpsdirection");
 		tracker_sparql_builder_object_unvalidated (metadata, md.gps_direction);
+	}
+
+	tracker_sparql_builder_predicate (metadata, "ivi:filecreated");
+	if (md.date) {
+		tracker_sparql_builder_object_unvalidated (metadata,
+		            md.date);
+	} else {
+		gchar *date;
+		guint64 mtime;
+
+		mtime = tracker_file_get_mtime_uri (uri);
+		date = tracker_date_to_string ((time_t) mtime);
+		tracker_sparql_builder_object_unvalidated (metadata, date);
+		g_free(date);
 	}
 
 	jpeg_destroy_decompress (&cinfo);
