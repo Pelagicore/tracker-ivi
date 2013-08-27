@@ -22,7 +22,9 @@
 #include <libavformat/avformat.h>
 #include <libavutil/error.h>
 
-gchar *get_property_from_streams(AVFormatContext *ctx, gchar *key)
+static gchar *
+get_property_from_streams(AVFormatContext *ctx,
+                                           gchar *key)
 {
 	AVDictionaryEntry *entry = NULL;
 	int i = 0;
@@ -36,7 +38,9 @@ gchar *get_property_from_streams(AVFormatContext *ctx, gchar *key)
 	return NULL;
 }
 
-gchar *get_property_from_context(AVFormatContext *ctx, gchar *key)
+static gchar *
+get_property_from_context(AVFormatContext *ctx,
+                                           gchar *key)
 {
 	AVDictionaryEntry *entry = NULL;
 	entry = av_dict_get(ctx->metadata, key, NULL, 0);
@@ -46,7 +50,8 @@ gchar *get_property_from_context(AVFormatContext *ctx, gchar *key)
 	return NULL;
 }
 
-AVFormatContext *open_context(const gchar *path)
+static AVFormatContext *
+open_context(const gchar *path)
 {
 	g_print("Path is: %s\n", path);
 	AVFormatContext *ctx = NULL;
@@ -62,10 +67,11 @@ AVFormatContext *open_context(const gchar *path)
 	return ctx;
 }
 
-gchar *get_coalesced_property(const gchar *path,
-                                    AVFormatContext *ctx,
-                                    gchar *key,
-                                    ...)
+static gchar *
+get_coalesced_property(const gchar *path,
+                             AVFormatContext *ctx,
+                             gchar *key,
+                             ...)
 {
 	gchar *i;
 	va_list ap;
@@ -83,12 +89,16 @@ gchar *get_coalesced_property(const gchar *path,
 	return value;
 }
 
-gchar *get_title(const gchar *path, AVFormatContext *ctx)
+static gchar *
+get_title(const gchar *path,
+                AVFormatContext *ctx)
 {
 	return get_coalesced_property(path, ctx, "title", NULL);
 }
 
-gchar *get_date(const gchar *path, AVFormatContext *ctx)
+static gchar *
+get_date(const gchar *path,
+               AVFormatContext *ctx)
 {
 	return get_coalesced_property(path, ctx, "date",
 	                                         "creation_time",
@@ -102,8 +112,7 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 	      GFile                *file;
 	      gchar                *filename, *uri;
 	      GString              *where;
-	const gchar                *graph;
-	      TrackerSparqlBuilder *builder, *pre_builder, *post_builder;
+	      TrackerSparqlBuilder *builder;
 	      GError               *error = NULL;
 	      gboolean              retval = TRUE;
 	      gchar                *title = NULL;
@@ -115,10 +124,7 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 	uri          = g_file_get_uri(file);
 	where        = g_string_new("");
 
-	pre_builder  = tracker_extract_info_get_preupdate_builder(info);
 	builder      = tracker_extract_info_get_metadata_builder(info);
-	post_builder = tracker_extract_info_get_postupdate_builder(info);
-	graph        = tracker_extract_info_get_graph(info);
 
 	av_register_all();
 
@@ -127,13 +133,13 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 	tracker_sparql_builder_predicate(builder, "a");
 	tracker_sparql_builder_object(builder, "ivi:Video");
 
-	if (title = get_title(filename, ctx)) {
+	if ((title = get_title(filename, ctx))) {
 		tracker_sparql_builder_predicate(builder, "ivi:videotitle");
 		tracker_sparql_builder_object_unvalidated(builder, title);
 	}
 
 	tracker_sparql_builder_predicate (builder, "ivi:filecreated");
-	if (date = get_date(filename, ctx)) {
+	if ((date = get_date(filename, ctx))) {
 		tracker_sparql_builder_object_unvalidated (builder,
 		            date);
 	} else {
@@ -146,7 +152,6 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 
 	tracker_extract_info_set_where_clause(info, where->str);
 
-cleanup:
 	g_string_free(where, TRUE);
 	g_free(date);
 	g_free(filename);
