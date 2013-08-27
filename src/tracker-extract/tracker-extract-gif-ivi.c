@@ -99,7 +99,6 @@ read_metadata (TrackerSparqlBuilder *preupdate,
 	int framewidth;
 	unsigned char *framedata = NULL;
 	GPtrArray *keywords;
-	guint i;
 	int status;
 	MergeData md = { 0 };
 	GifData   gd = { 0 };
@@ -452,7 +451,7 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		           g_strerror (errno));
 		g_free (filename);
 		return FALSE;
-	}	
+	}
 
 #if GIFLIB_MAJOR < 5
 	if ((gifFile = DGifOpenFileHandle (fd)) == NULL) {
