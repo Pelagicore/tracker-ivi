@@ -177,7 +177,7 @@ process_iTXt(PNGCHunk         *chunk,
 	gchar   descriptor[80];
 	gsize   desc_len  = 0, content_len = 0, lang_len = 0, trans_kw_len = 0;
 	guchar  comp_flag = 0, comp_method = 0;
-	GError *error;
+	GError *error = NULL;
 
 	g_seekable_seek(G_SEEKABLE(fis),
 	                chunk->offset,
@@ -278,7 +278,7 @@ process_text(PNGCHunk         *chunk,
 	gchar   *contents = g_malloc((sizeof(gchar) * chunk->length) + 1);
 	gchar   descriptor[80];
 	gsize   desc_len = 0, content_len = 0;
-	GError *error;
+	GError *error = NULL;
 
 	g_seekable_seek(G_SEEKABLE(fis),
 	                chunk->offset,
