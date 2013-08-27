@@ -179,7 +179,7 @@ process_iTXt(PNGCHunk         *chunk,
 	gchar   descriptor[80];
 	gsize   desc_len  = 0, content_len = 0, lang_len = 0, trans_kw_len = 0;
 	guchar  comp_flag = 0, comp_method = 0;
-	GError *error;
+	GError *error = NULL;
 
 	g_seekable_seek(G_SEEKABLE(fis),
 	                chunk->offset,
@@ -187,7 +187,7 @@ process_iTXt(PNGCHunk         *chunk,
 	                NULL,
 	                &error);
 	if (error)
-		g_warning("Failed to seek in text chunk");
+		g_warning("Failed to seek in iTxt chunk: %s", error->message);
 
 	input_stream_read_until(G_INPUT_STREAM(fis),
 	                        '\0',
@@ -263,9 +263,12 @@ process_iTXt(PNGCHunk         *chunk,
 	else
 		text_cb(descriptor, contents, "UTF-8", data);
 
-	g_free(contents);
-	g_free(language);
-	g_free(trans_keyword);
+	if (contents)
+		g_free(contents);
+	if (language)
+		g_free(language);
+	if (trans_keyword)
+		g_free(trans_keyword);
 	if (error)
 		g_error_free(error);
 }
@@ -280,7 +283,7 @@ process_text(PNGCHunk         *chunk,
 	gchar   *contents = g_malloc((sizeof(gchar) * chunk->length) + 1);
 	gchar   descriptor[80];
 	gsize   desc_len = 0, content_len = 0;
-	GError *error;
+	GError *error = NULL;
 
 	g_seekable_seek(G_SEEKABLE(fis),
 	                chunk->offset,
@@ -288,7 +291,7 @@ process_text(PNGCHunk         *chunk,
 	                NULL,
 	                &error);
 	if (error)
-		g_warning("Failed to seek in text chunk");
+		g_warning("Failed to seek in tEXt chunk: %s", error->message);
 
 	input_stream_read_until(G_INPUT_STREAM(fis),
 	                        '\0',
