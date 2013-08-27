@@ -96,9 +96,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	gchar *filename;
 	OggVorbis_File vf;
 	vorbis_comment *comment;
-	vorbis_info *vi;
-	unsigned int bitrate;
-	gint time;
 	GFile *file;
 	const gchar *graph;
 	gchar *file_uri = NULL;
@@ -193,7 +190,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 
 	if (vd.album) {
 		gchar *uri = tracker_sparql_escape_uri_printf ("urn:album:%s", vd.album);
-		gchar *album_disc_uri;
 
 		tracker_sparql_builder_insert_open (preupdate, NULL);
 		if (graph) {
