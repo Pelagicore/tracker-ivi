@@ -22,6 +22,8 @@
 #include <libavformat/avformat.h>
 #include <libavutil/error.h>
 
+#define LIBAV_DATE_FORMAT "%Y-%m-%d %H:%m:%S"
+
 gchar *get_property_from_streams(AVFormatContext *ctx, gchar *key)
 {
 	AVDictionaryEntry *entry = NULL;
@@ -90,9 +92,16 @@ gchar *get_title(const gchar *path, AVFormatContext *ctx)
 
 gchar *get_date(const gchar *path, AVFormatContext *ctx)
 {
-	return get_coalesced_property(path, ctx, "date",
-	                                         "creation_time",
-	                                         NULL);
+	gchar *formatted_date = NULL;
+	gchar *raw_date = get_coalesced_property(path, ctx, "date",
+	                                        "creation_time",
+	                                        NULL);
+
+	formatted_date = tracker_date_format_to_iso8601 (raw_date,
+	      LIBAV_DATE_FORMAT);
+	if (raw_date)
+		g_free (raw_date);
+	return formatted_date;
 }
 
 
