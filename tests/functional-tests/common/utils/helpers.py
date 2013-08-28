@@ -478,8 +478,8 @@ class ExtractorHelper (Helper):
            -> a nmm:Photo ;
         """
         hasEscapedComma = re.compile ("\".+,.+\"")
-
-        if "," in line and not hasEscapedComma.search (line):
+        hasURI = re.match(".* <.*> ", line) != None
+	if "," in line and not hasEscapedComma.search (line) and not hasURI:
             prop, multival = line.split (" ", 1)
             results = []
             for value in multival.split (","):
