@@ -62,10 +62,10 @@ class Helper:
         if self.bus is not None:
             return
 
+        DBusGMainLoop (set_as_default=True)
         self.loop = gobject.MainLoop ()
 
-        dbus_loop = DBusGMainLoop (set_as_default=True)
-        self.bus = dbus.SessionBus (dbus_loop)
+        self.bus = dbus.SessionBus ()
 
         obj = self.bus.get_object ("org.freedesktop.DBus",
                                    "/org/freedesktop/DBus")
