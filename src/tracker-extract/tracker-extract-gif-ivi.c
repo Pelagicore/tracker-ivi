@@ -297,7 +297,7 @@ read_metadata (TrackerSparqlBuilder *preupdate,
 		}
 		tracker_sparql_builder_insert_close (preupdate);
 
-		tracker_sparql_builder_predicate (metadata, "ivi:artistname");
+		tracker_sparql_builder_predicate (metadata, "ivi:imageartist");
 		tracker_sparql_builder_object_iri (metadata, uri);
 		g_free (uri);
 	}
