@@ -488,14 +488,20 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	}
 
 	tracker_sparql_builder_predicate (metadata, "ivi:filecreated");
-	if (metadata_props && md.date) {
-		tracker_sparql_builder_object_unvalidated (metadata,
-		            md.date);
+	if (metadata && md.date) {
+		char *guessed_date = NULL;
+		guessed_date = tracker_date_guess (md.date);
+		if (guessed_date)
+			tracker_sparql_builder_object_unvalidated (metadata,
+		            guessed_date);
+		else
+			g_warning ("Invalid date!");
+		g_free (guessed_date);
 	} else {
 		gchar *date;
 		guint64 mtime;
 
-		mtime = tracker_file_get_mtime_uri (file_props->uri);
+		mtime = tracker_file_get_mtime_uri (uri);
 		date = tracker_date_to_string ((time_t) mtime);
 		tracker_sparql_builder_object_unvalidated (metadata, date);
 		g_free(date);
