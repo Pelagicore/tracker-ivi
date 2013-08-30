@@ -32,7 +32,7 @@ gchar *get_property_from_streams(AVFormatContext *ctx, gchar *key)
 		AVStream *s = ctx->streams[i];
 		entry = av_dict_get(s->metadata, key, NULL, 0);
 		if (entry) {
-			return entry->value;
+			return g_strdup(entry->value);
 		}
 	}
 	return NULL;
@@ -43,7 +43,7 @@ gchar *get_property_from_context(AVFormatContext *ctx, gchar *key)
 	AVDictionaryEntry *entry = NULL;
 	entry = av_dict_get(ctx->metadata, key, NULL, 0);
 	if (entry) {
-		return entry->value;
+		return g_strdup(entry->value);
 	}
 	return NULL;
 }
