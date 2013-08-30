@@ -436,30 +436,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		tracker_sparql_builder_object (metadata, md.metering_mode);
 	}
 
-	if (md.creator && !md.artist) {
-		gchar *uri = tracker_sparql_escape_uri_printf ("urn:artist:%s", md.creator);
-
-		tracker_sparql_builder_insert_open (preupdate, NULL);
-		if (graph) {
-			tracker_sparql_builder_graph_open (preupdate, graph);
-		}
-
-		tracker_sparql_builder_subject_iri (preupdate, uri);
-		tracker_sparql_builder_predicate (preupdate, "a");
-		tracker_sparql_builder_object (preupdate, "ivi:Artist");
-		tracker_sparql_builder_predicate (preupdate, "ivi:artistname");
-		tracker_sparql_builder_object_unvalidated (preupdate, md.creator);
-
-		if (graph) {
-			tracker_sparql_builder_graph_close (preupdate);
-		}
-		tracker_sparql_builder_insert_close (preupdate);
-
-		tracker_sparql_builder_predicate (metadata, "ivi:imageartist");
-		tracker_sparql_builder_object_iri (metadata, uri);
-		g_free (uri);
-	}
-
 	if (md.comment) {
 		tracker_sparql_builder_predicate (metadata, "ivi:imagecomment");
 		tracker_sparql_builder_object_unvalidated (metadata, md.comment);
