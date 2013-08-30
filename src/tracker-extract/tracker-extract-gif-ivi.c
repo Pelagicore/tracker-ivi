@@ -258,6 +258,9 @@ read_metadata (TrackerSparqlBuilder *preupdate,
 	if (xd->copyright) {
 		tracker_sparql_builder_predicate (metadata, "ivi:imagecopyright");
 		tracker_sparql_builder_object_unvalidated (metadata, xd->copyright);
+	} else if (xd->rights) {
+		tracker_sparql_builder_predicate (metadata, "ivi:imagecopyright");
+		tracker_sparql_builder_object_unvalidated (metadata, xd->rights);
 	}
 
 	if (xd->make) {
