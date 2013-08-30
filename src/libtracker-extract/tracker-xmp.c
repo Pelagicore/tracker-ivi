@@ -458,6 +458,7 @@ iterate_simple (const gchar    *uri,
 			data->rights = g_strdup (value);
 		} else if (!data->creator && g_ascii_strcasecmp (name, "creator") == 0) {
 			data->creator = g_strdup (value);
+			data->artist = g_strdup (value);
 		} else if (!data->description && g_ascii_strcasecmp (name, "description") == 0) {
 			data->description = g_strdup (value);
 		} else if (!data->date && g_ascii_strcasecmp (name, "date") == 0) {
