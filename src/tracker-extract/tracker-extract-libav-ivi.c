@@ -156,12 +156,17 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 	tracker_extract_info_set_where_clause(info, where->str);
 
 cleanup:
-	g_string_free(where, TRUE);
-	g_free(date);
-	g_free(filename);
+	if (date)
+		g_free(date);
+	if (filename)
+		g_free(filename);
+	if (where)
+		g_string_free(where, TRUE);
 	if (error)
 		g_error_free(error);
 	if (ctx)
 		avformat_free_context(ctx);
+	if (uri)
+		g_free(uri);
 	return retval;
 }
