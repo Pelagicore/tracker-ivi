@@ -395,6 +395,8 @@ iterate_simple (const gchar    *uri,
 			data->make = g_strdup (value);
 		} else if (!data->model && g_ascii_strcasecmp (name, "Model") == 0) {
 			data->model = g_strdup (value);
+		} else if (!data->flash && g_ascii_strcasecmp (name, "Flash/exif:Fired") == 0) {
+			data->flash = g_strdup (value);
 		} else if (!data->flash && g_ascii_strcasecmp (name, "Flash") == 0) {
 			data->flash = g_strdup (fix_flash (value));
 		} else if (!data->metering_mode && g_ascii_strcasecmp (name, "MeteringMode") == 0) {
