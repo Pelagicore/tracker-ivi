@@ -107,9 +107,9 @@ fix_flash (const gchar *flash)
 	value = atoi (flash);
 
 	if (value & fired_mask) {
-		return "nmm:flash-on";
+		return "True";
 	} else {
-		return "nmm:flash-off";
+		return "False";
 	}
 }
 
