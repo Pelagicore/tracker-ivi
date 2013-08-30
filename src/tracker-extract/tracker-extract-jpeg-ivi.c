@@ -363,11 +363,9 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	}
 */
 	if (md.fnumber) {
-		gdouble value;
-
-		value = g_strtod (md.fnumber, NULL);
 		tracker_sparql_builder_predicate (metadata, "ivi:imagefnumber");
-		tracker_sparql_builder_object_double (metadata, value);
+		tracker_sparql_builder_object_unvalidated (metadata,
+		                                           md.fnumber);
 	}
 
 	if (md.flash) {
