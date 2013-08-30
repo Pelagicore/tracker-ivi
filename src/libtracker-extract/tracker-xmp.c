@@ -431,7 +431,11 @@ iterate_simple (const gchar    *uri,
 	} else if (g_ascii_strcasecmp (schema, NS_TIFF) == 0) {
 		if (!data->orientation && g_ascii_strcasecmp (name, "Orientation") == 0) {
 			data->orientation = g_strdup (fix_orientation (value));
-		}
+		} else if (!data->make && g_ascii_strcasecmp (name, "Make") == 0) {
+			data->make = g_strdup (value);
+		} else if (!data->model && g_ascii_strcasecmp (name, "Model") == 0) {
+			data->model = g_strdup (value);
+		} 
 		/* PDF*/
 	} else if (g_ascii_strcasecmp (schema, NS_PDF) == 0) {
 		if (g_ascii_strcasecmp (name, "keywords") == 0) {
