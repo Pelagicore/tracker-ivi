@@ -400,7 +400,7 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		}
 		tracker_sparql_builder_insert_close (preupdate);
 
-		tracker_sparql_builder_predicate (metadata, "ivi:imagecreator");
+		tracker_sparql_builder_predicate (metadata, "ivi:imageartist");
 		tracker_sparql_builder_object_iri (metadata, uri);
 		g_free (uri);
 	}
