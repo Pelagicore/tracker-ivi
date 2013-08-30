@@ -22,7 +22,7 @@
 #include <libavformat/avformat.h>
 #include <libavutil/error.h>
 
-#define LIBAV_DATE_FORMAT "%Y-%m-%d %H:%m:%S"
+#define LIBAV_DATE_FORMAT "%Y-%m-%d %H:%M:%S"
 
 gchar *get_property_from_streams(AVFormatContext *ctx, gchar *key)
 {
