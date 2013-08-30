@@ -75,9 +75,9 @@ gchar *get_coalesced_property(const gchar *path,
 	gchar *value = NULL;
 
 	for (i = key; i != NULL; i = va_arg(ap, gchar*)) {
-		value = get_property_from_streams(ctx, i);
+		value = get_property_from_context(ctx, i);
 		if (!value)
-			value = get_property_from_context(ctx, i);
+			value = get_property_from_streams(ctx, i);
 		if (value) break;
 	}
 
