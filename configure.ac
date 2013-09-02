@@ -2418,7 +2418,7 @@ AM_CONDITIONAL(HAVE_LIBAV_IVI, test "x$have_libav_ivi" = "xyes")
 
 AC_ARG_ENABLE(libvorbis-ivi,
               AS_HELP_STRING([--enable-libvorbis-ivi],
-                             [enable extractor for vorbis-IVI (ogg) [[default=no]]]),,
+                             [enable extractor for vorbis-IVI (ogg) [[default=yes]]]),,
               [enable_libvorbis_ivi=no])
 
 if test "x$enable_libvorbis_ivi" != "xno" ; then
