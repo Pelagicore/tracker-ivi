@@ -470,40 +470,6 @@ id3v2tag_free (id3v2tag *tags)
 	g_free (tags->title3);
 }
 
-static gboolean
-guess_dlna_profile (gint          bitrate,
-                    gint          frequency,
-                    gint          mpeg_version,
-                    gint          layer_version,
-                    gint          n_channels,
-                    const gchar **dlna_profile,
-                    const gchar **dlna_mimetype)
-{
-	if (mpeg_version == MPEG_V1 &&
-	    layer_version == LAYER_3 &&
-	    (bitrate >= 32000 && bitrate <= 320000) &&
-	    (n_channels == 1 || n_channels == 2) &&
-	    (frequency == freq_table[0][0] ||
-	     frequency == freq_table[1][0] ||
-	     frequency == freq_table[2][0])) {
-		*dlna_profile = "MP3";
-		*dlna_mimetype = "audio/mpeg";
-		return TRUE;
-	}
-
-	if ((bitrate >= 8000 && bitrate <= 320000) &&
-	    (mpeg_version == MPEG_V1 || mpeg_version == MPEG_V2) &&
-	    (frequency == freq_table[0][0] || frequency == freq_table[0][1] ||
-	     frequency == freq_table[1][0] || frequency == freq_table[1][1] ||
-	     frequency == freq_table[2][0] || frequency == freq_table[2][1])) {
-		*dlna_profile = "MP3X";
-		*dlna_mimetype = "audio/mpeg";
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
 static char *
 read_id3v1_buffer (int     fd,
                    goffset size)
@@ -839,7 +805,6 @@ mp3_parse_header (const gchar          *data,
                   TrackerSparqlBuilder *metadata,
                   MP3Data              *filedata)
 {
-	const gchar *dlna_profile, *dlna_mimetype;
 	guint header;
 	gchar mpeg_ver = 0;
 	gchar layer_ver = 0;
@@ -849,12 +814,10 @@ mp3_parse_header (const gchar          *data,
 	gint bitrate = 0;
 	guint avg_bps = 0;
 	gint vbr_flag = 0;
-	guint length = 0;
 	gint sample_rate = 0;
 	guint frame_size;
 	guint frames = 0;
 	size_t pos = 0;
-	gint n_channels;
 
 	pos = seek_pos;
 
@@ -955,14 +918,6 @@ mp3_parse_header (const gchar          *data,
 
 	avg_bps /= frames;
 
-	if ((!vbr_flag && frames > VBR_THRESHOLD) || (frames > MAX_FRAMES_SCAN)) {
-		/* If not all frames scanned
-		 * Note that bitrate is always > 0, checked before */
-		length = (filedata->size - filedata->id3v2_size) / (avg_bps ? avg_bps : bitrate) / 125;
-	} else {
-		/* Note that sample_rate is always > 0, checked before */
-		length = spfp8 * 8 * frames / sample_rate;
-	}
 /*
 	tracker_sparql_builder_predicate (metadata, "ivi:tracklength");
 	tracker_sparql_builder_object_int64 (metadata, length);
@@ -1234,29 +1189,6 @@ get_id3v24_tags (id3v24frame           frame,
 	}
 
 	case ID3V24_COMM: {
-//		gchar *word;
-//		gchar text_encode;
-//		const gchar *text_desc;
-//		const gchar *text;
-//		guint offset;
-//		gint text_desc_len;
-//
-//		text_encode   =  data[pos + 0]; /* $xx */
-//		text_desc     = &data[pos + 4]; /* <text string according to encoding> $00 (00) */
-//		text_desc_len = id3v2_strlen (text_encode, text_desc, csize - 4);
-//
-//		offset        = 4 + text_desc_len + id3v2_nul_size (text_encode);
-//		text          = &data[pos + offset]; /* <full text string according to encoding> */
-//
-//		word = id3v24_text_to_utf8 (text_encode, text, csize - offset);
-//
-//		if (!tracker_is_empty_string (word)) {
-//			g_strstrip (word);
-//			g_free (tag->comment);
-//			tag->comment = word;
-//		} else {
-//			g_free (word);
-//		}
 		break;
 	}
 
@@ -2135,11 +2067,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	                                   md.id3v22.title2,
 	                                   md.id3v1.title);
 
-	md.lyricist = tracker_coalesce_strip (4, md.id3v24.text,
-	                                      md.id3v23.toly,
-	                                      md.id3v23.text,
-	                                      md.id3v22.text);
-
 	md.composer = tracker_coalesce_strip (3, md.id3v24.composer,
 	                                      md.id3v23.composer,
 	                                      md.id3v22.composer);
@@ -2173,26 +2100,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	                                            md.id3v22.release_time,
 	                                            md.id3v1.recording_time);
 
-	md.publisher = tracker_coalesce_strip (3, md.id3v24.publisher,
-	                                       md.id3v23.publisher,
-	                                       md.id3v22.publisher);
-
-	md.copyright = tracker_coalesce_strip (3, md.id3v24.copyright,
-	                                       md.id3v23.copyright,
-	                                       md.id3v22.copyright);
-
-	md.comment = tracker_coalesce_strip (7, md.id3v24.title3,
-	                                     md.id3v24.comment,
-	                                     md.id3v23.title3,
-	                                     md.id3v23.comment,
-	                                     md.id3v22.title3,
-	                                     md.id3v22.comment,
-	                                     md.id3v1.comment);
-
-	md.encoded_by = tracker_coalesce_strip (3, md.id3v24.encoded_by,
-	                                        md.id3v23.encoded_by,
-	                                        md.id3v22.encoded_by);
-
 	if (md.id3v24.track_number != 0) {
 		md.track_number = md.id3v24.track_number;
 	} else if (md.id3v23.track_number != 0) {
@@ -2201,30 +2108,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		md.track_number = md.id3v22.track_number;
 	} else if (md.id3v1.track_number != 0) {
 		md.track_number = md.id3v1.track_number;
-	}
-
-	if (md.id3v24.track_count != 0) {
-		md.track_count = md.id3v24.track_count;
-	} else if (md.id3v23.track_count != 0) {
-		md.track_count = md.id3v23.track_count;
-	} else if (md.id3v22.track_count != 0) {
-		md.track_count = md.id3v22.track_count;
-	}
-
-	if (md.id3v24.set_number != 0) {
-		md.set_number = md.id3v24.set_number;
-	} else if (md.id3v23.set_number != 0) {
-		md.set_number = md.id3v23.set_number;
-	} else if (md.id3v22.set_number != 0) {
-		md.set_number = md.id3v22.set_number;
-	}
-
-	if (md.id3v24.set_count != 0) {
-		md.set_count = md.id3v24.set_count;
-	} else if (md.id3v23.set_count != 0) {
-		md.set_count = md.id3v23.set_count;
-	} else if (md.id3v22.set_count != 0) {
-		md.set_count = md.id3v22.set_count;
 	}
 
 	close (fd);
