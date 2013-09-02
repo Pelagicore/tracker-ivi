@@ -278,32 +278,9 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	}
 
 	md.title = tracker_coalesce_strip (4, xd->title, ed->document_name, xd->title2, xd->pdf_title);
-	md.orientation = tracker_coalesce_strip (3, xd->orientation, ed->orientation, id->image_orientation);
 	md.copyright = tracker_coalesce_strip (4, xd->copyright, xd->rights, ed->copyright, id->copyright_notice);
-	md.white_balance = tracker_coalesce_strip (2, xd->white_balance, ed->white_balance);
-	md.fnumber = tracker_coalesce_strip (2, xd->fnumber, ed->fnumber);
-	md.flash = tracker_coalesce_strip (2, xd->flash, ed->flash);
-	md.focal_length =  tracker_coalesce_strip (2, xd->focal_length, ed->focal_length);
 	md.artist = tracker_coalesce_strip (3, xd->artist, ed->artist, xd->contributor);
-	md.exposure_time = tracker_coalesce_strip (2, xd->exposure_time, ed->exposure_time);
-	md.iso_speed_ratings = tracker_coalesce_strip (2, xd->iso_speed_ratings, ed->iso_speed_ratings);
 	md.date = tracker_coalesce_strip (5, xd->date, xd->time_original, ed->time, id->date_created, ed->time_original);
-	md.description = tracker_coalesce_strip (2, xd->description, ed->description);
-	md.metering_mode = tracker_coalesce_strip (2, xd->metering_mode, ed->metering_mode);
-	md.city = tracker_coalesce_strip (2, xd->city, id->city);
-	md.state = tracker_coalesce_strip (2, xd->state, id->state);
-	md.address = tracker_coalesce_strip (2, xd->address, id->sublocation);
-	md.country = tracker_coalesce_strip (2, xd->country, id->country_name);
-
-	/* FIXME We are not handling the altitude ref here for xmp */
-	md.gps_altitude = tracker_coalesce_strip (2, xd->gps_altitude, ed->gps_altitude);
-	md.gps_latitude = tracker_coalesce_strip (2, xd->gps_latitude, ed->gps_latitude);
-	md.gps_longitude = tracker_coalesce_strip (2, xd->gps_longitude, ed->gps_longitude);
-	md.gps_direction = tracker_coalesce_strip (2, xd->gps_direction, ed->gps_direction);
-	md.creator = tracker_coalesce_strip (3, xd->creator, id->byline, id->credit);
-	md.comment = tracker_coalesce_strip (2, comment, ed->user_comment);
-	md.make = tracker_coalesce_strip (2, xd->make, ed->make);
-	md.model = tracker_coalesce_strip (2, xd->model, ed->model);
 
 	/* Prioritize on native dimention in all cases */
 	tracker_sparql_builder_predicate (metadata, "ivi:imagewidth");
@@ -332,54 +309,11 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	tracker_extract_info_set_where_clause (info, where->str);
 	g_string_free (where, TRUE);
 
-	if (md.make) {
-		tracker_sparql_builder_predicate (metadata, "ivi:cameramanufacturer");
-		tracker_sparql_builder_object_unvalidated (metadata, md.make);
-	}
-	if (md.model) {
-		tracker_sparql_builder_predicate (metadata, "ivi:cameramodel");
-		tracker_sparql_builder_object_unvalidated (metadata, md.model);
-	}
-
 	tracker_guarantee_title_from_file (metadata,
 	                                   "ivi:imagetitle",
 	                                   md.title,
 	                                   uri,
 	                                   NULL);
-
-	if (md.orientation) {
-		tracker_sparql_builder_predicate (metadata, "ivi:imageorientation");
-		tracker_sparql_builder_object (metadata, md.orientation);
-	}
-
-	if (md.copyright) {
-		tracker_sparql_builder_predicate (metadata, "ivi:imagecopyright");
-		tracker_sparql_builder_object_unvalidated (metadata, md.copyright);
-	}
-/*
-	if (md.white_balance) {
-		tracker_sparql_builder_predicate (metadata, "ivi:imagewhitebalance");
-		tracker_sparql_builder_object (metadata, md.white_balance);
-	}
-*/
-	if (md.fnumber) {
-		tracker_sparql_builder_predicate (metadata, "ivi:imagefnumber");
-		tracker_sparql_builder_object_unvalidated (metadata,
-		                                           md.fnumber);
-	}
-
-	if (md.flash) {
-		tracker_sparql_builder_predicate (metadata, "ivi:imageflash");
-		tracker_sparql_builder_object (metadata, md.flash);
-	}
-
-	if (md.focal_length) {
-		gdouble value;
-
-		value = g_strtod (md.focal_length, NULL);
-		tracker_sparql_builder_predicate (metadata, "ivi:imagefocallength");
-		tracker_sparql_builder_object_double (metadata, value);
-	}
 
 	if (md.artist) {
 		gchar *uri = tracker_sparql_escape_uri_printf ("urn:artist:%s", md.artist);
@@ -403,88 +337,6 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		tracker_sparql_builder_predicate (metadata, "ivi:imageartist");
 		tracker_sparql_builder_object_iri (metadata, uri);
 		g_free (uri);
-	}
-
-	if (md.exposure_time) {
-		gdouble value;
-
-		value = g_strtod (md.exposure_time, NULL);
-		tracker_sparql_builder_predicate (metadata, "ivi:imageexposuretime");
-		tracker_sparql_builder_object_double (metadata, value);
-	}
-
-	if (md.iso_speed_ratings) {
-		gdouble value;
-
-		value = g_strtod (md.iso_speed_ratings, NULL);
-		tracker_sparql_builder_predicate (metadata, "ivi:isospeed");
-		tracker_sparql_builder_object_double (metadata, value);
-	}
-
-	tracker_guarantee_date_from_file_mtime (metadata,
-	                                        "ivi:imagedate",
-	                                        md.date,
-	                                        uri);
-
-	if (md.description) {
-		tracker_sparql_builder_predicate (metadata, "ivi:imagedescription");
-		tracker_sparql_builder_object_unvalidated (metadata, md.description);
-	}
-
-	if (md.metering_mode) {
-		tracker_sparql_builder_predicate (metadata, "ivi:imagemeteringmode");
-		tracker_sparql_builder_object (metadata, md.metering_mode);
-	}
-
-	if (md.comment) {
-		tracker_sparql_builder_predicate (metadata, "ivi:imagecomment");
-		tracker_sparql_builder_object_unvalidated (metadata, md.comment);
-	}
-
-	if (md.address || md.state || md.country || md.city ||
-	    md.gps_altitude || md.gps_latitude || md.gps_longitude) {
-
-		if (md.address || md.state || md.country || md.city) {
-			if (md.address) {
-				tracker_sparql_builder_predicate (metadata, "ivi:imageaddress");
-				tracker_sparql_builder_object_unvalidated (metadata, md.address);
-			}
-
-			if (md.state) {
-				tracker_sparql_builder_predicate (metadata, "ivi:imagestate");
-				tracker_sparql_builder_object_unvalidated (metadata, md.state);
-			}
-
-			if (md.city) {
-				tracker_sparql_builder_predicate (metadata, "ivi:imagecity");
-				tracker_sparql_builder_object_unvalidated (metadata, md.city);
-			}
-
-			if (md.country) {
-				tracker_sparql_builder_predicate (metadata, "ivi:imagecountry");
-				tracker_sparql_builder_object_unvalidated (metadata, md.country);
-			}
-		}
-
-		if (md.gps_altitude) {
-			tracker_sparql_builder_predicate (metadata, "ivi:imagegpsaltitude");
-			tracker_sparql_builder_object_unvalidated (metadata, md.gps_altitude);
-		}
-
-		if (md.gps_latitude) {
-			tracker_sparql_builder_predicate (metadata, "ivi:imagegpslatitude");
-			tracker_sparql_builder_object_unvalidated (metadata, md.gps_latitude);
-		}
-
-		if (md.gps_longitude) {
-			tracker_sparql_builder_predicate (metadata, "ivi:imagegpslongitude");
-			tracker_sparql_builder_object_unvalidated (metadata, md.gps_longitude);
-		}
-	}
-
-	if (md.gps_direction) {
-		tracker_sparql_builder_predicate (metadata, "ivi:imagegpsdirection");
-		tracker_sparql_builder_object_unvalidated (metadata, md.gps_direction);
 	}
 
 	tracker_sparql_builder_predicate (metadata, "ivi:filecreated");
