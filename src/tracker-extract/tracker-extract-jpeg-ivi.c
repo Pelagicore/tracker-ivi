@@ -170,6 +170,8 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	marker = (struct jpeg_marker_struct *) &cinfo.marker_list;
 
 	while (marker) {
+		gchar *str;
+		gsize len;
 #ifdef HAVE_LIBIPTCDATA
 		gsize offset;
 		guint sublen;
@@ -182,6 +184,9 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 			break;
 
 		case JPEG_APP0 + 1:
+			str = (gchar*) marker->data;
+			len = marker->data_length;
+
 #ifdef HAVE_LIBEXIF
 			if (strncmp (EXIF_NAMESPACE, str, EXIF_NAMESPACE_LENGTH) == 0) {
 				ed = tracker_exif_new ((guchar *) marker->data, len, uri);
@@ -199,6 +204,8 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 			break;
 
 		case JPEG_APP0 + 13:
+			str = (gchar*) marker->data;
+			len = marker->data_length;
 #ifdef HAVE_LIBIPTCDATA
 			if (len > 0 && strncmp (PS3_NAMESPACE, str, PS3_NAMESPACE_LENGTH) == 0) {
 				offset = iptc_jpeg_ps3_find_iptc (str, len, &sublen);
