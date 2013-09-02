@@ -32,16 +32,20 @@ CONFIGURE_FLAGS :=					\
 	--disable-text					\
 	--disable-icon					\
 	--disable-artwork				\
+	--disable-libtiff				\
+	--disable-libflac				\
+	--disable-libgif				\
+	--disable-libjpeg				\
+	--disable-libvorbis				\
+	--disable-png-faster				\
 							\
 	--enable-libexif				\
 	--enable-gdkpixbuf				\
 	--enable-generic-media-extractor=gstreamer	\
-	--enable-libgif					\
-	--enable-libjpeg				\
-	--enable-libtiff				\
-	--enable-libvorbis				\
-	--enable-libflac				\
-	--enable-png-faster				\
+	--enable-libgif-ivi				\
+	--enable-jpeg-ivi				\
+	--enable-libvorbis-ivi				\
+	--enable-png-faster-ivi				\
 							\
 	--with-unicode-support=libicu
 
