@@ -112,13 +112,11 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		vd.track_number = ogg_get_comment (comment, "tracknumber");
 		vd.disc_number = ogg_get_comment (comment, "DiscNo");
 		vd.performer = ogg_get_comment (comment, "Performer");
-		vd.track_gain = ogg_get_comment (comment, "TrackGain");
 
 		date = ogg_get_comment (comment, "date");
 		vd.date = tracker_date_guess (date);
 		g_free (date);
 
-		vd.comment = ogg_get_comment (comment, "comment");
 		vd.genre = ogg_get_comment (comment, "genre");
 
 		vorbis_comment_clear (comment);
