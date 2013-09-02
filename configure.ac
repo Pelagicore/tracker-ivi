@@ -2429,7 +2429,7 @@ if test "x$enable_libvorbis_ivi" != "xno" ; then
       AC_DEFINE(HAVE_LIBVORBIS_IVI, [], [Define if we have libvorbis-ivi])
    fi
 else
-   have_libvorbis_IVI="no  (disabled)"
+   have_libvorbis_ivi="no  (disabled)"
 fi
 
 if test "x$enable_libvorbis_ivi" = "xyes"; then
