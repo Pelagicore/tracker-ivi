@@ -24,7 +24,8 @@
 
 #define LIBAV_DATE_FORMAT "%Y-%m-%d %H:%M:%S"
 
-gchar *get_property_from_streams(AVFormatContext *ctx, gchar *key)
+static gchar *
+get_property_from_streams(AVFormatContext *ctx, gchar *key)
 {
 	AVDictionaryEntry *entry = NULL;
 	int i = 0;
@@ -117,8 +118,7 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 	      GFile                *file;
 	      gchar                *filename, *uri;
 	      GString              *where;
-	const gchar                *graph;
-	      TrackerSparqlBuilder *builder, *pre_builder, *post_builder;
+	      TrackerSparqlBuilder *builder;
 	      GError               *error = NULL;
 	      gboolean              retval = TRUE;
 	      gchar                *title = NULL;
@@ -130,10 +130,7 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 	uri          = g_file_get_uri(file);
 	where        = g_string_new("");
 
-	pre_builder  = tracker_extract_info_get_preupdate_builder(info);
 	builder      = tracker_extract_info_get_metadata_builder(info);
-	post_builder = tracker_extract_info_get_postupdate_builder(info);
-	graph        = tracker_extract_info_get_graph(info);
 
 	av_register_all();
 
@@ -142,13 +139,13 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 	tracker_sparql_builder_predicate(builder, "a");
 	tracker_sparql_builder_object(builder, "ivi:Video");
 
-	if (title = get_title(filename, ctx)) {
+	if ((title = get_title(filename, ctx))) {
 		tracker_sparql_builder_predicate(builder, "ivi:videotitle");
 		tracker_sparql_builder_object_unvalidated(builder, title);
 	}
 
 	tracker_sparql_builder_predicate (builder, "ivi:filecreated");
-	if (date = get_date(filename, ctx)) {
+	if ((date = get_date(filename, ctx))) {
 		tracker_sparql_builder_object_unvalidated (builder,
 		            date);
 	} else {
@@ -161,7 +158,6 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 
 	tracker_extract_info_set_where_clause(info, where->str);
 
-cleanup:
 	if (date)
 		g_free(date);
 	if (filename)
