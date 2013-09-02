@@ -576,28 +576,13 @@ process_text_st_cb(gchar *field_name,
 		}
 	}
 
-	if (g_strcmp0(field_name, "Comment") == 0)
-		props->comment = utf8_field_contents;
-	else if (g_strcmp0(field_name, "Author") == 0)
+	if (g_strcmp0(field_name, "Author") == 0)
 		props->creator = utf8_field_contents;
-	else if (g_strcmp0(field_name, "Description") == 0)
-		props->description = utf8_field_contents;
-	else if (g_strcmp0(field_name, "Copyright") == 0)
-		props->copyright = utf8_field_contents;
-	else if (g_strcmp0(field_name, "Creation Time") == 0)
-		props->creation_time =
-		  tracker_date_format_to_iso8601(utf8_field_contents,
-		                                 RFC1123_DATE_FORMAT);
+	else if (g_strcmp0(field_name, "Creation Time") == 0) {
+		props->creation_time = tracker_date_guess(utf8_field_contents);
+        }
 	else if (g_strcmp0(field_name, "Title") == 0)
 		props->title = utf8_field_contents;
-	else if (g_strcmp0(field_name, "Disclaimer") == 0)
-		props->disclaimer = utf8_field_contents;
-	else if (g_strcmp0(field_name, "Model") == 0)
-		props->model = utf8_field_contents;
-	else if (g_strcmp0(field_name, "Make") == 0)
-		props->make = utf8_field_contents;
-	else if (g_strcmp0(field_name, "License") == 0)
-		props->license = utf8_field_contents;
 }
 static void
 process_end_st_cb(void *data) {
@@ -620,19 +605,10 @@ insert_metadata(PNGFileProps *file_props,
 	const gchar                *graph;
 	      TrackerSparqlBuilder *metadata;
 	      TrackerSparqlBuilder *preupdate;
-	      gchar                *dlna_profile;
 
-	dlna_profile = NULL;
 	graph        = file_props->graph;
 	preupdate    = file_props->pre_update;
 	metadata     = file_props->main_update;
-
-	if (metadata_props->comment) {
-		tracker_sparql_builder_predicate(metadata,
-		                                 "ivi:imagecomment");
-		tracker_sparql_builder_object_unvalidated(metadata,
-		                            metadata_props->comment);
-	}
 
 	if (metadata_props->creator) {
 		gchar *uri;
@@ -660,34 +636,6 @@ insert_metadata(PNGFileProps *file_props,
 		g_free(uri);
 	}
 
-	if (metadata_props->description) {
-		tracker_sparql_builder_predicate(metadata,
-		                                 "ivi:imagedescription");
-		tracker_sparql_builder_object_unvalidated(metadata,
-		                            metadata_props->description);
-	}
-
-	if (metadata_props->copyright) {
-		tracker_sparql_builder_predicate(metadata,
-		                                 "ivi:imagecopyright");
-		tracker_sparql_builder_object_unvalidated(metadata,
-		                            metadata_props->copyright);
-	}
-
-
-	if (metadata_props->make) {
-		tracker_sparql_builder_predicate(metadata,
-						  "ivi:cameramanufacturer");
-		tracker_sparql_builder_object_unvalidated(metadata,
-				    metadata_props->make);
-	}
-	if (metadata_props->model) {
-		tracker_sparql_builder_predicate(metadata,
-						  "ivi:cameramodel");
-		tracker_sparql_builder_object_unvalidated(metadata,
-				    metadata_props->model);
-	}
-	
 	tracker_sparql_builder_predicate (metadata, "ivi:filecreated");
 	if (metadata_props && metadata_props->creation_time) {
 		tracker_sparql_builder_object_unvalidated (metadata,
@@ -791,4 +739,4 @@ cleanup:
 	if (error)
 		g_error_free(error);
 	return retval;
-}
+} 
