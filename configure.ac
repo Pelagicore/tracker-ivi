@@ -1626,11 +1626,13 @@ AC_ARG_ENABLE(generic-media-extractor,
               [enable_generic_media_extractor=auto])
 
 PKG_CHECK_MODULES(GSTREAMER,
-                  [gstreamer-1.0 >= $GSTREAMER_REQUIRED
-                   gstreamer-tag-1.0 >= $GSTREAMER_REQUIRED],
+                  [gstreamer-1.0 >= $GSTREAMER_REQUIRED],
                   [have_libgstreamer=yes],
                   [have_libgstreamer=no])
-
+PKG_CHECK_MODULES(GSTREAMER_TAG,
+                  [gstreamer-tag-1.0 >= $GSTREAMER_REQUIRED],
+                  [have_libgstreamer_tag=yes],
+                  [have_libgstreamer_tag=no])
 AC_SUBST(GSTREAMER_CFLAGS)
 AC_SUBST(GSTREAMER_LIBS)
 
@@ -1659,6 +1661,9 @@ elif test "x$enable_generic_media_extractor" = "xgstreamer"; then
       have_generic_media_handler="yes"
    else
       AC_MSG_ERROR([Couldn't find GStreamer >= $GSTREAMER_REQUIRED])
+   fi
+   if test "$have_libgstreamer_tag" = "no"; then
+      AC_MSG_ERROR([Couldn't find GStreamer-tag >= $GSTREAMER_REQUIRED])
    fi
 elif test "x$enable_generic_media_extractor" = "xxine"; then
    if test "$have_libxine" = "yes"; then
