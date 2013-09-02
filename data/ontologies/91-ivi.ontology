@@ -1,0 +1,281 @@
+@prefix nrl: <http://www.semanticdesktop.org/ontologies/2007/08/15/nrl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tracker: <http://www.tracker-project.org/ontologies/tracker#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix nao: <http://www.semanticdesktop.org/ontologies/2007/08/15/nao#> .
+@prefix ivi: <http://www.pelagicore.com/ontologies/ivi#> .
+
+ivi: a tracker:Namespace, tracker:Ontology ;
+	tracker:prefix "ivi" ;
+	nao:lastModified "2013-07-23T13:16:00Z" .
+
+ivi:File a rdfs:Class .
+ivi:Artist a rdfs:Class .
+ivi:Album a rdfs:Class .
+ivi:Track a rdfs:Class ;
+	rdfs:subclassOf ivi:File .
+ivi:Image a rdfs:Class ;
+	rdfs:subclassOf ivi:File .
+ivi:Video a rdfs:Class ;
+	rdfs:subclassOf ivi:File .
+
+#
+# Artist & artist properties
+#
+
+
+ivi:artistname a rdf:Property ;
+	rdfs:label "Artist's name" ;
+	nrl:maxCardinality 1 ;
+	rdfs:domain ivi:Artist ;
+	rdfs:range xsd:string .
+
+#
+# Album & album properties
+#
+
+
+ivi:albumname a rdf:Property ;
+	nrl:maxCardinality 1 ;
+	rdfs:domain ivi:Album ;
+	rdfs:range xsd:string .
+
+ivi:albumtrackcount a rdf:Property ;
+	nrl:maxCardinality 1 ;
+	rdfs:domain ivi:Album ;
+	rdfs:range xsd:integer .
+
+ivi:albumalbumartist a rdf:Property ;
+	rdfs:domain ivi:Album ;
+	nrl:maxCardinality 1 ;
+	rdfs:range ivi:Artist .
+
+#
+# Track properties
+#
+
+
+ivi:trackname a rdf:Property ;
+	nrl:maxCardinality 1 ;
+	rdfs:domain ivi:Track ;
+	rdfs:range xsd:string .
+
+ivi:trackartist a rdf:Property ;
+	rdfs:domain ivi:Track ;
+	nrl:maxCardinality 1  ;
+	rdfs:range ivi:Artist .
+
+ivi:trackalbum a rdf:Property ;
+	rdfs:domain ivi:Track ;
+	nrl:maxCardinality 1 ;
+	rdfs:range ivi:Album .
+
+ivi:trackcreated a rdf:Property ;
+	rdfs:domain ivi:Track ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:trackgenre a rdf:Property ;
+	rdfs:domain ivi:Track ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+# Length in seconds
+ivi:tracklength a rdf:Property ;
+	rdfs:domain ivi:Track ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+ivi:trackcomposer a rdf:Property ;
+	rdfs:domain ivi:Track ;
+	nrl:maxCardinality 1 ;
+	rdfs:range ivi:Artist .
+
+ivi:tracktracknumber a rdf:Property ;
+	rdfs:domain ivi:Track ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+ivi:trackdiscnumber a rdf:Property ;
+	rdfs:domain ivi:Track ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+#
+# Image properties
+#
+
+ivi:imagetitle a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagewidth a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+ivi:imageheight a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+ivi:imageartist a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range ivi:Artist .
+
+ivi:imagedate a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imageorientation a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagecameramake a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagecameramodel a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagecopyright a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagewhitebalance a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+ivi:imagefstop a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+ivi:imageflash a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:boolean .
+
+ivi:imageexposuretime a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+ivi:imageiso a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+ivi:imagedescription a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagemeteringmode a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagecreator a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range ivi:Artist .
+
+ivi:imagecomment a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagecity a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagestate a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imageaddress a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagecountry a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagegpsaltitude a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+ivi:imagegpslongitude a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+ivi:imagegpslatitude a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:integer .
+
+ivi:imagegpsdirection a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:imagefile a rdf:Property ;
+	rdfs:domain ivi:Image ;
+	nrl:maxCardinality 1 ;
+	rdfs:range ivi:File .
+
+#
+# Video properties
+#
+
+ivi:videotitle a rdf:Property ;
+	rdfs:domain ivi:Video ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+#
+# File properties
+#
+
+ivi:fileLastModified a rdf:Property ;
+	rdfs:domain ivi:File ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:dateTime .
+
+ivi:filecreated a rdf:Property ;
+    rdfs:domain ivi:File ;
+    nrl:maxCardinality 1 ;
+    rdfs:range xsd:dateTime .
+
+ivi:fileurl a rdf:Property ;
+	rdfs:domain ivi:File ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+ivi:mimetype a rdf:Property ;
+	rdfs:domain ivi:File ;
+	nrl:maxCardinality 1 ;
+	rdfs:range xsd:string .
+
+tracker:available a rdf:Property ;
+	nrl:maxCardinality 1 ;
+	rdfs:domain ivi:File ;
+	rdfs:range xsd:boolean .
+

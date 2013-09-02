@@ -1,0 +1,13 @@
+@prefix ivi: <http://www.pelagicore.com/ontologies/ivi#> .
+
+<virtual-ontology-uri:91-ivi.ontology> a dsc:Ontology ;
+	dsc:title "IVI-specific classes and properties" ;
+	dsc:description "Some IVI specific properties" ;
+
+	dsc:author "Pelagicore AB" ;
+	dsc:editor "Pelagicore AB" ;
+	dsc:gitlog "https://github.com/Pelagicore/tracker-ivi/commits/master/data/ontologies/91-ivi.ontology";
+
+	dsc:localPrefix "ivi" ;
+	dsc:baseUrl "http://www.pelagicore.com/ontologies/ivi#" ;
+	dsc:relativePath "./91-ivi.ontology" .

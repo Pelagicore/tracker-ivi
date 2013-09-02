@@ -45,6 +45,7 @@ static gboolean full_namespaces;
 static gboolean print_version;
 static gboolean plain_text_content;
 static gboolean turtle;
+static gboolean ivi;
 
 static GOptionEntry entries[] = {
 	{ "version", 'V', 0, G_OPTION_ARG_NONE, &print_version,
@@ -61,6 +62,10 @@ static GOptionEntry entries[] = {
 	},
 	{ "turtle", 't', 0, G_OPTION_ARG_NONE, &turtle,
 	  N_("Output results as RDF in Turtle format"),
+	  NULL,
+	},
+	{ "ivi", 'i', 0, G_OPTION_ARG_NONE, &ivi,
+	  N_("Use the flattened IVI namespace"),
 	  NULL,
 	},
 	{ G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames,
@@ -417,7 +422,10 @@ main (int argc, char **argv)
 		}
 
 		/* First check whether there's some entity with nie:url like this */
-		query = g_strdup_printf ("SELECT ?urn WHERE { ?urn nie:url \"%s\" }", uri);
+		if (ivi)
+			query = g_strdup_printf ("SELECT ?urn WHERE { ?urn ivi:fileurl \"%s\" }", uri);
+		else
+			query = g_strdup_printf ("SELECT ?urn WHERE { ?urn nie:url \"%s\" }", uri);
 		cursor = tracker_sparql_connection_query (connection, query, NULL, &error);
 		g_free (query);
 

@@ -502,30 +502,30 @@ sparql_file_query_start (TrackerFileNotifier *notifier,
 
 	if (file_type == G_FILE_TYPE_DIRECTORY) {
 		if (recursive) {
-			sparql = g_strdup_printf ("select ?url ?u nfo:fileLastModified(?u) "
+			sparql = g_strdup_printf ("select ?url ?u ivi:fileLastModified(?u) "
 			                          "where {"
-			                          "  ?u a nie:DataObject ; "
-			                          "     nie:url ?url . "
+			                          "  ?u a ivi:File ; "
+			                          "     ivi:fileurl ?url . "
 			                          "  FILTER (?url = \"%s\" || "
 			                          "          fn:starts-with (?url, \"%s/\")) "
 			                          "}", uri, uri);
 		} else {
-			sparql = g_strdup_printf ("select ?url ?u nfo:fileLastModified(?u) "
+			sparql = g_strdup_printf ("select ?url ?u ivi:fileLastModified(?u) "
 			                          "where { "
-			                          "  ?u a nie:DataObject ; "
+			                          "  ?u a ivi:File ; "
 			                          "     nie:url ?url . "
-			                          "  OPTIONAL { ?u nfo:belongsToContainer ?p } . "
+/*			                          "  OPTIONAL { ?u nfo:belongsToContainer ?p } . "*/
 			                          "  FILTER (?url = \"%s\" || "
-			                          "          nie:url(?p) = \"%s\") "
+			                          "          ivi:fileurl(?p) = \"%s\") "
 			                          "}", uri, uri);
 		}
 	} else {
 		/* If it's a regular file, only query this item */
-		sparql = g_strdup_printf ("select ?url ?u nfo:fileLastModified(?u) "
+		sparql = g_strdup_printf ("select ?url ?u ivi:fileLastModified(?u) "
 		                          "where { "
-		                          "  ?u a nie:DataObject ; "
-		                          "     nie:url ?url ; "
-		                          "     nie:url \"%s\" . "
+		                          "  ?u a ivi:File ; "
+		                          "     ivi:fileurl ?url ; "
+		                          "     ivi:fileurl \"%s\" . "
 		                          "}", uri);
 	}
 

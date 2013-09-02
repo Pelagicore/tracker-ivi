@@ -1,0 +1,4 @@
+[ExtractorRule]
+ModulePath=@modulesdir@/libextract-libav-ivi.so
+MimeTypes=video/*;application/vnd.rn-realmedia
+

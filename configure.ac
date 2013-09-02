@@ -199,6 +199,8 @@ NETWORK_MANAGER_REQUIRED=0.8
 GSTREAMER_REQUIRED=0.10.31
 GUPNP_DLNA_REQUIRED=0.9.4
 LIBPNG_REQUIRED=0.89
+LIBAV_REQUIRED=0.1
+#53.21.0
 
 # 3.6.11 for sqlite_backup API
 # 3.6.16 to fix test failures
@@ -2239,6 +2241,206 @@ fi
 AM_CONDITIONAL(HAVE_MP3, test "x$have_mp3" = "xyes")
 
 ####################################################################
+# Check for tracker-extract: mp3-ivi
+####################################################################
+
+AC_ARG_ENABLE(mp3-ivi,
+              AS_HELP_STRING([--enable-mp3-ivi],
+                             [enable MP3-IVI support [[default=auto]]]),,
+              [enable_mp3_ivi=auto])
+
+if test "x$enable_mp3_ivi" != "xno"; then
+   AC_SUBST(MP3_IVI_CFLAGS)
+   AC_SUBST(MP3_IVI_LIBS)
+   AC_DEFINE(HAVE_MP3_IVI, [], [Define if we have MP3-IVI extractor])
+   have_mp3_ivi=yes
+else
+   have_mp3_ivi="no  (disabled)"
+fi
+
+AM_CONDITIONAL(HAVE_MP3_IVI, test "x$have_mp3_ivi" = "xyes")
+
+####################################################################
+# Check for tracker-extract: png-ivi
+####################################################################
+
+AC_ARG_ENABLE(png-ivi,
+              AS_HELP_STRING([--enable-png-ivi],
+                             [enable PNG-IVI support [[default=auto]]]),,
+              [enable_png_ivi=auto])
+
+if test "x$enable_png_ivi" != "xno"; then
+   AC_SUBST(PNG_IVI_CFLAGS)
+   AC_SUBST(PNG_IVI_LIBS)
+   AC_DEFINE(HAVE_PNG_IVI, [], [Define if we have PNG-IVI extractor])
+   have_png_ivi=yes
+else
+   have_png_ivi="no  (disabled)"
+fi
+
+AM_CONDITIONAL(HAVE_PNG_IVI, test "x$have_png_ivi" = "xyes")
+
+####################################################################
+# Check for tracker-extract: jpeg-ivi
+####################################################################
+
+AC_ARG_ENABLE(jpeg-ivi,
+              AS_HELP_STRING([--enable-jpeg-ivi],
+                             [enable JPEG-IVI support [[default=auto]]]),,
+              [enable_jpeg_ivi=auto])
+
+if test "x$enable_jpeg_ivi" != "xno"; then
+   AC_SUBST(JPEG_IVI_CFLAGS)
+   AC_SUBST(JPEG_IVI_LIBS)
+   AC_DEFINE(HAVE_JPEG_IVI, [], [Define if we have JPEG-IVI extractor])
+   have_jpeg_ivi=yes
+else
+   have_jpeg_ivi="no  (disabled)"
+fi
+
+AM_CONDITIONAL(HAVE_JPEG_IVI, test "x$have_jpeg_ivi" = "xyes")
+
+#####################################################################
+# Check for tracker-extract: png-faster-ivi
+#####################################################################
+
+# Extracts metadata from tEXt and iTXt chunks found before and after IDAT
+# chunks Faster than tracker-extract-png since IDAT chunks are skipped.
+
+AC_ARG_ENABLE(png-faster-ivi,
+             AS_HELP_STRING([--enable-png-faster-ivi],
+                            [enable a faster PNG-IVI extractor [[default=auto]]]),
+                            [enable_png_faster_ivi=yes],
+                            [enable_png_faster_ivi=no])
+
+if test "x$enable_png_faster_ivi" != "xno"; then
+  AC_DEFINE(HAVE_PNG_FASTER_IVI, 1, [Faster PNG-IVI extractor])
+fi
+
+AM_CONDITIONAL(HAVE_PNG_FASTER_IVI, test "x$enable_png_faster_ivi" = "xyes")
+
+##################################################################
+# Check for tracker-extract: libgif-ivi
+##################################################################
+
+# FIXME: This should be package based. Unfortunately in several main
+# distros, it is not.
+
+OLD_CFLAGS="$CFLAGS"
+OLD_LIBS="$LIBS"
+CFLAGS=""
+LIBS=""
+
+AC_ARG_ENABLE(libgif-ivi,
+              AS_HELP_STRING([--enable-libgif-ivi],
+                             [enable extractor for GIF-IVI [[default=auto]]]),,
+              [enable_libgif=auto])
+
+if test "x$enable_libgif_ivi" != "xno" ; then
+   AC_CHECK_HEADER(gif_lib.h,
+   AC_CHECK_LIB(gif,DGifOpen))
+
+   have_libgif_ivi=${ac_cv_lib_gif_DGifOpen:-no}
+
+   LIBGIF_IVI_CFLAGS="$CFLAGS"
+   LIBGIF_IVI_LIBS="$LIBS"
+
+   AC_SUBST(LIBGIF_IVI_CFLAGS)
+   AC_SUBST(LIBGIF_IVI_LIBS)
+
+   if test "x$have_libgif_ivi" = "xyes"; then
+      AC_DEFINE(HAVE_LIBGIF_IVI, [], [Define if we have libgif-ivi])
+   fi
+else
+   have_libgif_ivi="no  (disabled)"
+fi
+
+if test "x$enable_libgif_ivi" = "xyes"; then
+   if test "x$have_libgif_ivi" != "xyes"; then
+      AC_MSG_ERROR([Couldn't find libgif >= $LIBGIF_REQUIRED.])
+   fi
+fi
+
+AM_CONDITIONAL(HAVE_LIBGIF_IVI, test "x$have_libgif_ivi" = "xyes")
+
+CFLAGS="$OLD_CFLAGS"
+LIBS="$OLD_LIBS"
+
+##################################################################
+# Check for tracker-extract: libav-ivi
+##################################################################
+
+# FIXME: This should be package based. Unfortunately in several main
+# distros, it is not.
+
+OLD_CFLAGS="$CFLAGS"
+OLD_LIBS="$LIBS"
+CFLAGS=""
+LIBS=""
+
+AC_ARG_ENABLE(libav-ivi,
+              AS_HELP_STRING([--enable-libav-ivi],
+                             [enable extractor for libav-IVI [[default=auto]]]),,
+              [enable_libav_ivi=auto])
+
+if test "x$enable_libav_ivi" != "xno" ; then
+   PKG_CHECK_MODULES(LIBAV,
+                     [libavformat, libavutil],
+                     [have_libav_ivi=yes],
+                     [have_libav_ivi=no])
+
+   AC_SUBST(LIBAV_CFLAGS)
+   AC_SUBST(LIBAV_LIBS)
+
+   if test "x$have_libav_ivi" = "xyes"; then
+      AC_DEFINE(HAVE_LIBAV_IVI, [], [Define if we have libav-ivi])
+   fi
+else
+   have_libav_ivi="no  (disabled)"
+fi
+
+if test "x$enable_libav_ivi" = "xyes"; then
+   if test "x$have_libav_ivi" != "xyes"; then
+      AC_MSG_ERROR([Couldn't find libav >= $LIBAV_REQUIRED.])
+   fi
+fi
+
+AM_CONDITIONAL(HAVE_LIBAV_IVI, test "x$have_libav_ivi" = "xyes")
+
+##################################################################
+# Check for tracker-extract: vorbis-ivi
+##################################################################
+
+AC_ARG_ENABLE(libvorbis-ivi,
+              AS_HELP_STRING([--enable-libvorbis-ivi],
+                             [enable extractor for vorbis-IVI (ogg) [[default=no]]]),,
+              [enable_libvorbis_ivi=no])
+
+if test "x$enable_libvorbis_ivi" != "xno" ; then
+   PKG_CHECK_MODULES(LIBVORBIS_IVI,
+                     [vorbisfile >= $LIBVORBIS_REQUIRED],
+                     [have_libvorbis_ivi=yes],
+                     [have_libvorbis_ivi=no])
+
+   AC_SUBST(LIBVORBIS_IVI_CFLAGS)
+   AC_SUBST(LIBVORBIS_IVI_LIBS)
+
+   if test "x$have_libvorbis_ivi" = "xyes"; then
+      AC_DEFINE(HAVE_LIBVORBIS_IVI, [], [Define if we have libvorbis-ivi])
+   fi
+else
+   have_libvorbis_ivi="no  (disabled)"
+fi
+
+if test "x$enable_libvorbis_ivi" = "xyes"; then
+   if test "x$have_libvorbis_ivi" != "xyes"; then
+      AC_MSG_ERROR([Couldn't find libvorbis >= $LIBVORBIS_REQUIRED.])
+   fi
+fi
+
+AM_CONDITIONAL(HAVE_LIBVORBIS_IVI, test "x$have_libvorbis_ivi" = "xyes")
+
+####################################################################
 # Check for tracker-extract: ps
 ####################################################################
 
@@ -2400,6 +2602,35 @@ fi
 
 AM_CONDITIONAL(HAVE_ARTWORK, test "x$have_artwork" = "xyes")
 
+####################################################################
+# Check whether we should include IVI-specific ontologies
+####################################################################
+
+AC_ARG_ENABLE(ivi-ontologies,
+              AS_HELP_STRING([--enable-ivi-ontologies],
+                             [enable IVI-specific ontologies [[default=no]]]),,
+              [enable_ivi_ontologies=no])
+
+if test "x$enable_ivi_ontologies" != "xno"; then
+   AC_DEFINE(ENABLE_IVI_ONTOLOGIES, [], [Define if we should install IVI-specific ontologies])
+fi
+
+AM_CONDITIONAL(ENABLE_IVI_ONTOLOGIES, test "x$enable_ivi_ontologies" = "xyes")
+
+###################################################################
+# Check whether we should exclude non-IVI ontologies
+####################################################################
+
+AC_ARG_ENABLE(non-ivi-ontologies,
+              AS_HELP_STRING([--enable-non-ivi-ontologies],
+                             [enable non-IVI ontologies [[default=yes]]]),,
+              [enable_non_ivi_ontologies=yes])
+
+if test "x$enable_non_ivi_ontologies" != "xno"; then
+   AC_DEFINE(ENABLE_NON_IVI_ONTOLOGIES, [], [Define if we should enable non-IVI ontologies])
+fi
+
+AM_CONDITIONAL(ENABLE_NON_IVI_ONTOLOGIES, test "x$enable_non_ivi_ontologies" = "xyes")
 
 ##################################################################
 # Write generated files
@@ -2619,6 +2850,19 @@ Metadata Extractors:
 	Support PS parsing:                     $have_ps
 	Support text parsing:                   $have_text
 	Support icon parsing:                   $have_icon
+
+IVI-specific settings:
+	Include IVI ontology:                   $enable_ivi_ontologies
+	Include non-IVI ontologies:             $enable_non_ivi_ontologies
+
+IVI-specific extractors:
+	Include MP3-IVI extractor               $have_mp3_ivi
+	Include PNG-IVI extractor               $have_png_ivi
+	Include PNG-faster-IVI                  $enable_png_faster_ivi
+	Include JPEG-IVI extractor              $have_jpeg_ivi
+	Include GIF-IVI extractor               $have_libgif_ivi
+	Include libav-IVI extractor             $have_libav_ivi
+	Include libvorbis-IVI extractor         $have_libvorbis_ivi
 
 Data Miners:
 

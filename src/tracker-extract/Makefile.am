@@ -17,7 +17,13 @@ AM_CPPFLAGS = \
 # duplicates work and requires more maintenance to keep modules up to
 # date.
 rules_in_files = \
+	07-png-faster-ivi.rule.in \
+	08-png-ivi.rule.in \
+	09-gif-ivi.rule.in \
+	09-jpeg-ivi.rule.in \
+	09-mp3-ivi.rule.in \
 	09-png-faster.rule.in \
+	09-vorbis-ivi.rule.in \
 	10-abw.rule.in \
 	10-dvi.rule.in \
 	10-epub.rule.in \
@@ -39,6 +45,7 @@ rules_in_files = \
 	10-xps.rule.in \
 	11-iso.rule.in \
 	11-msoffice-xml.rule.in \
+	14-libav-ivi.rule.in \
 	15-gstreamer-guess.rule.in \
 	15-playlist.rule.in \
 	90-gstreamer-generic.rule.in \
@@ -180,6 +187,41 @@ endif
 if HAVE_PNG_FASTER
 modules_LTLIBRARIES += libextract-png-faster.la
 rules_DATA += 09-png-faster.rule
+endif
+
+if HAVE_MP3_IVI
+modules_LTLIBRARIES += libextract-mp3-ivi.la
+rules_DATA += 09-mp3-ivi.rule
+endif
+
+if HAVE_PNG_IVI
+modules_LTLIBRARIES += libextract-png-ivi.la
+rules_DATA += 08-png-ivi.rule
+endif
+
+if HAVE_JPEG_IVI
+modules_LTLIBRARIES += libextract-jpeg-ivi.la
+rules_DATA += 09-jpeg-ivi.rule
+endif
+
+if HAVE_LIBGIF_IVI
+modules_LTLIBRARIES += libextract-gif-ivi.la
+rules_DATA += 09-gif-ivi.rule
+endif
+
+if HAVE_PNG_FASTER_IVI
+modules_LTLIBRARIES += libextract-png-faster-ivi.la
+rules_DATA += 07-png-faster-ivi.rule
+endif
+
+if HAVE_LIBAV_IVI
+modules_LTLIBRARIES += libextract-libav-ivi.la
+rules_DATA += 14-libav-ivi.rule
+endif
+
+if HAVE_LIBVORBIS_IVI
+modules_LTLIBRARIES += libextract-vorbis-ivi.la
+rules_DATA += 09-vorbis-ivi.rule
 endif
 
 # ABW
@@ -510,6 +552,90 @@ libextract_iso_la_LIBADD = \
 	$(BUILD_LIBS) \
 	$(TRACKER_EXTRACT_MODULES_LIBS) \
 	$(LIBOSINFO_LIBS)
+
+# MP3-IVI
+libextract_mp3_ivi_la_SOURCES = tracker-extract-mp3-ivi.c
+libextract_mp3_ivi_la_CFLAGS = $(TRACKER_EXTRACT_MODULES_CFLAGS)
+libextract_mp3_ivi_la_LDFLAGS = $(module_flags)
+libextract_mp3_ivi_la_LIBADD =  \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS)
+
+# PNG-IVI
+libextract_png_ivi_la_SOURCES = tracker-extract-png-ivi.c
+libextract_png_ivi_la_CFLAGS = $(TRACKER_EXTRACT_MODULES_CFLAGS)
+libextract_png_ivi_la_LDFLAGS = $(module_flags)
+libextract_png_ivi_la_LIBADD =  \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS)
+
+# JPEG-IVI
+libextract_jpeg_ivi_la_SOURCES = tracker-extract-jpeg-ivi.c
+libextract_jpeg_ivi_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBJPEG_CFLAGS)
+libextract_jpeg_ivi_la_LDFLAGS = $(module_flags)
+libextract_jpeg_ivi_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS) \
+	$(LIBJPEG_LIBS)
+
+# PNG Faster-ivi
+libextract_png_faster_ivi_la_SOURCES = tracker-extract-png-faster-ivi.c
+libextract_png_faster_ivi_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBPNG_CFLAGS)
+libextract_png_faster_ivi_la_LDFLAGS = $(module_flags)
+libextract_png_faster_ivi_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS)
+
+# GIF-ivi
+libextract_gif_ivi_la_SOURCES = tracker-extract-gif-ivi.c
+libextract_gif_ivi_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBGIF_IVI_CFLAGS)
+libextract_gif_ivi_la_LDFLAGS = $(module_flags)
+libextract_gif_ivi_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS) \
+	$(LIBGIF_IVI_LIBS)
+
+# libav-ivi
+libextract_libav_ivi_la_SOURCES = tracker-extract-libav-ivi.c
+libextract_libav_ivi_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBAV_CFLAGS)
+libextract_libav_ivi_la_LDFLAGS = $(module_flags)
+libextract_libav_ivi_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS) \
+	$(LIBAV_LIBS)
+
+# vorbis-ivi
+libextract_vorbis_ivi_la_SOURCES = tracker-extract-vorbis-ivi.c
+libextract_vorbis_ivi_la_CFLAGS = \
+	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
+	$(LIBAV_CFLAGS)
+libextract_vorbis_ivi_la_LDFLAGS = $(module_flags)
+libextract_vorbis_ivi_la_LIBADD = \
+	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
+	$(top_builddir)/src/libtracker-common/libtracker-common.la \
+	$(BUILD_LIBS) \
+	$(TRACKER_EXTRACT_MODULES_LIBS) \
+	$(LIBVORBIS_IVI_LIBS)
 
 #
 # Binaries

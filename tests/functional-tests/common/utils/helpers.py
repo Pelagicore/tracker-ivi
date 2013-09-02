@@ -62,10 +62,10 @@ class Helper:
         if self.bus is not None:
             return
 
+        DBusGMainLoop (set_as_default=True)
         self.loop = gobject.MainLoop ()
 
-        dbus_loop = DBusGMainLoop (set_as_default=True)
-        self.bus = dbus.SessionBus (dbus_loop)
+        self.bus = dbus.SessionBus ()
 
         obj = self.bus.get_object ("org.freedesktop.DBus",
                                    "/org/freedesktop/DBus")
@@ -478,8 +478,8 @@ class ExtractorHelper (Helper):
            -> a nmm:Photo ;
         """
         hasEscapedComma = re.compile ("\".+,.+\"")
-
-        if "," in line and not hasEscapedComma.search (line):
+        hasURI = re.match(".* <.*> ", line) != None
+	if "," in line and not hasEscapedComma.search (line) and not hasURI:
             prop, multival = line.split (" ", 1)
             results = []
             for value in multival.split (","):

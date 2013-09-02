@@ -107,9 +107,9 @@ fix_flash (const gchar *flash)
 	value = atoi (flash);
 
 	if (value & fired_mask) {
-		return "nmm:flash-on";
+		return "True";
 	} else {
-		return "nmm:flash-off";
+		return "False";
 	}
 }
 
@@ -395,6 +395,8 @@ iterate_simple (const gchar    *uri,
 			data->make = g_strdup (value);
 		} else if (!data->model && g_ascii_strcasecmp (name, "Model") == 0) {
 			data->model = g_strdup (value);
+		} else if (!data->flash && g_ascii_strcasecmp (name, "Flash/exif:Fired") == 0) {
+			data->flash = g_strdup (value);
 		} else if (!data->flash && g_ascii_strcasecmp (name, "Flash") == 0) {
 			data->flash = g_strdup (fix_flash (value));
 		} else if (!data->metering_mode && g_ascii_strcasecmp (name, "MeteringMode") == 0) {
@@ -429,7 +431,11 @@ iterate_simple (const gchar    *uri,
 	} else if (g_ascii_strcasecmp (schema, NS_TIFF) == 0) {
 		if (!data->orientation && g_ascii_strcasecmp (name, "Orientation") == 0) {
 			data->orientation = g_strdup (fix_orientation (value));
-		}
+		} else if (!data->make && g_ascii_strcasecmp (name, "Make") == 0) {
+			data->make = g_strdup (value);
+		} else if (!data->model && g_ascii_strcasecmp (name, "Model") == 0) {
+			data->model = g_strdup (value);
+		} 
 		/* PDF*/
 	} else if (g_ascii_strcasecmp (schema, NS_PDF) == 0) {
 		if (g_ascii_strcasecmp (name, "keywords") == 0) {
@@ -452,6 +458,7 @@ iterate_simple (const gchar    *uri,
 			data->rights = g_strdup (value);
 		} else if (!data->creator && g_ascii_strcasecmp (name, "creator") == 0) {
 			data->creator = g_strdup (value);
+			data->artist = g_strdup (value);
 		} else if (!data->description && g_ascii_strcasecmp (name, "description") == 0) {
 			data->description = g_strdup (value);
 		} else if (!data->date && g_ascii_strcasecmp (name, "date") == 0) {

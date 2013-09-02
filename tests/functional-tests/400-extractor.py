@@ -224,7 +224,7 @@ class ExtractionTestCase (ut.TestCase):
                                                           section))
 
 
-def run_all ():
+def run_all (path):
     ##
     # Traverse the TEST_DATA_PATH directory looking for .description files
     # Add a new TestCase to the suite per .description file and run the suite.
@@ -232,7 +232,9 @@ def run_all ():
     # Is we do this inside a single TestCase an error in one test would stop the whole
     # testing.
     ##
-    if (os.path.exists (os.getcwd() + "/test-extraction-data")):
+    if path:
+        TEST_DATA_PATH = path
+    elif (os.path.exists (os.getcwd() + "/test-extraction-data")):
         # Use local directory if available
         TEST_DATA_PATH = os.getcwd() + "/test-extraction-data"
     else:
@@ -264,10 +266,16 @@ def run_one (filename):
 
 if __name__ == "__main__":
     if (len (sys.argv) == 1):
-        run_all ()
+        run_all (None)
     else:
-        if os.path.exists (sys.argv[1]) and sys.argv[1].endswith (".expected"):
-            run_one (sys.argv[1])
+        param = sys.argv[1]
+        if os.path.exists (param):
+            if param.endswith (".expected"):
+                run_one (param)
+            elif os.path.isdir (param):
+                run_all (param)
+            else:
+                print "Parameter is not a diectory, and not a .expected-file"
         else:
-            print "Usage: %s [FILE.expected]" % (sys.argv[0])
+            print "Usage: %s [FILE.expected / directory]" % (sys.argv[0])
         
