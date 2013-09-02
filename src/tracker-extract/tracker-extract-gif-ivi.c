@@ -229,10 +229,25 @@ read_metadata (TrackerSparqlBuilder *preupdate,
 	md.date = tracker_coalesce_strip (2, xd->date, xd->time_original);
 	md.artist = tracker_coalesce_strip (2, xd->artist, xd->contributor);
 
-	tracker_guarantee_date_from_file_mtime (metadata,
-	                                        "ivi:imagedate",
-	                                        md.date,
-	                                        uri);
+	tracker_sparql_builder_predicate (metadata, "ivi:filecreated");
+	if (metadata && md.date) {
+		char *guessed_date = NULL;
+		guessed_date = tracker_date_guess (md.date);
+		if (guessed_date)
+			tracker_sparql_builder_object_unvalidated (metadata,
+		            guessed_date);
+		else
+			g_warning ("Invalid date!");
+		g_free (guessed_date);
+	} else {
+		gchar *date;
+		guint64 mtime;
+
+		mtime = tracker_file_get_mtime_uri (uri);
+		date = tracker_date_to_string ((time_t) mtime);
+		tracker_sparql_builder_object_unvalidated (metadata, date);
+		g_free(date);
+	}
 
 	if (xd->description) {
 		tracker_sparql_builder_predicate (metadata, "ivi:imagedescription");
@@ -242,6 +257,9 @@ read_metadata (TrackerSparqlBuilder *preupdate,
 	if (xd->copyright) {
 		tracker_sparql_builder_predicate (metadata, "ivi:imagecopyright");
 		tracker_sparql_builder_object_unvalidated (metadata, xd->copyright);
+	} else if (xd->rights) {
+		tracker_sparql_builder_predicate (metadata, "ivi:imagecopyright");
+		tracker_sparql_builder_object_unvalidated (metadata, xd->rights);
 	}
 
 	if (xd->make) {
@@ -278,7 +296,7 @@ read_metadata (TrackerSparqlBuilder *preupdate,
 		}
 		tracker_sparql_builder_insert_close (preupdate);
 
-		tracker_sparql_builder_predicate (metadata, "ivi:artistname");
+		tracker_sparql_builder_predicate (metadata, "ivi:imageartist");
 		tracker_sparql_builder_object_iri (metadata, uri);
 		g_free (uri);
 	}

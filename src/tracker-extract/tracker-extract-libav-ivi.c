@@ -22,9 +22,9 @@
 #include <libavformat/avformat.h>
 #include <libavutil/error.h>
 
-static gchar *
-get_property_from_streams(AVFormatContext *ctx,
-                                           gchar *key)
+#define LIBAV_DATE_FORMAT "%Y-%m-%d %H:%M:%S"
+
+gchar *get_property_from_streams(AVFormatContext *ctx, gchar *key)
 {
 	AVDictionaryEntry *entry = NULL;
 	int i = 0;
@@ -32,7 +32,7 @@ get_property_from_streams(AVFormatContext *ctx,
 		AVStream *s = ctx->streams[i];
 		entry = av_dict_get(s->metadata, key, NULL, 0);
 		if (entry) {
-			return entry->value;
+			return g_strdup(entry->value);
 		}
 	}
 	return NULL;
@@ -45,7 +45,7 @@ get_property_from_context(AVFormatContext *ctx,
 	AVDictionaryEntry *entry = NULL;
 	entry = av_dict_get(ctx->metadata, key, NULL, 0);
 	if (entry) {
-		return entry->value;
+		return g_strdup(entry->value);
 	}
 	return NULL;
 }
@@ -53,7 +53,6 @@ get_property_from_context(AVFormatContext *ctx,
 static AVFormatContext *
 open_context(const gchar *path)
 {
-	g_print("Path is: %s\n", path);
 	AVFormatContext *ctx = NULL;
 	int ret = 0;
 	ret = avformat_open_input(&ctx, path, NULL, NULL);
@@ -79,9 +78,9 @@ get_coalesced_property(const gchar *path,
 	gchar *value = NULL;
 
 	for (i = key; i != NULL; i = va_arg(ap, gchar*)) {
-		value = get_property_from_streams(ctx, i);
+		value = get_property_from_context(ctx, i);
 		if (!value)
-			value = get_property_from_context(ctx, i);
+			value = get_property_from_streams(ctx, i);
 		if (value) break;
 	}
 
@@ -97,12 +96,18 @@ get_title(const gchar *path,
 }
 
 static gchar *
-get_date(const gchar *path,
-               AVFormatContext *ctx)
+get_date(const gchar *path, AVFormatContext *ctx)
 {
-	return get_coalesced_property(path, ctx, "date",
-	                                         "creation_time",
-	                                         NULL);
+	gchar *formatted_date = NULL;
+	gchar *raw_date = get_coalesced_property(path, ctx, "date",
+	                                        "creation_time",
+	                                        NULL);
+
+	formatted_date = tracker_date_format_to_iso8601 (raw_date,
+	      LIBAV_DATE_FORMAT);
+	if (raw_date)
+		g_free (raw_date);
+	return formatted_date;
 }
 
 
@@ -112,7 +117,8 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 	      GFile                *file;
 	      gchar                *filename, *uri;
 	      GString              *where;
-	      TrackerSparqlBuilder *builder;
+	const gchar                *graph;
+	      TrackerSparqlBuilder *builder, *pre_builder, *post_builder;
 	      GError               *error = NULL;
 	      gboolean              retval = TRUE;
 	      gchar                *title = NULL;
@@ -124,7 +130,10 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 	uri          = g_file_get_uri(file);
 	where        = g_string_new("");
 
+	pre_builder  = tracker_extract_info_get_preupdate_builder(info);
 	builder      = tracker_extract_info_get_metadata_builder(info);
+	post_builder = tracker_extract_info_get_postupdate_builder(info);
+	graph        = tracker_extract_info_get_graph(info);
 
 	av_register_all();
 
@@ -133,13 +142,13 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 	tracker_sparql_builder_predicate(builder, "a");
 	tracker_sparql_builder_object(builder, "ivi:Video");
 
-	if ((title = get_title(filename, ctx))) {
+	if (title = get_title(filename, ctx)) {
 		tracker_sparql_builder_predicate(builder, "ivi:videotitle");
 		tracker_sparql_builder_object_unvalidated(builder, title);
 	}
 
 	tracker_sparql_builder_predicate (builder, "ivi:filecreated");
-	if ((date = get_date(filename, ctx))) {
+	if (date = get_date(filename, ctx)) {
 		tracker_sparql_builder_object_unvalidated (builder,
 		            date);
 	} else {
@@ -152,12 +161,18 @@ tracker_extract_get_metadata(TrackerExtractInfo *info)
 
 	tracker_extract_info_set_where_clause(info, where->str);
 
-	g_string_free(where, TRUE);
-	g_free(date);
-	g_free(filename);
+cleanup:
+	if (date)
+		g_free(date);
+	if (filename)
+		g_free(filename);
+	if (where)
+		g_string_free(where, TRUE);
 	if (error)
 		g_error_free(error);
 	if (ctx)
 		avformat_free_context(ctx);
+	if (uri)
+		g_free(uri);
 	return retval;
 }
