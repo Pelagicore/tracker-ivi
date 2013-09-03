@@ -181,7 +181,7 @@ LIBTIFF_REQUIRED="any version"
 LIBVORBIS_REQUIRED=0.22
 LIBFLAC_REQUIRED=1.2.1
 LIBEXIF_REQUIRED=0.6
-LIBGSF_REQUIRED=1.13
+LIBGSF_REQUIRED=1.14.24
 LIBOSINFO_REQUIRED=0.0.2
 EXEMPI_REQUIRED=2.1.0
 EVO_REQUIRED=2.32.0
@@ -2750,7 +2750,6 @@ AC_CONFIG_FILES([
         src/plugins/firefox/defaults/Makefile
         src/plugins/firefox/defaults/preferences/Makefile
 	src/plugins/nautilus/Makefile
-	src/vapi/Makefile
 	tests/common/Makefile
         tests/gvdb/Makefile
 	tests/libtracker-common/Makefile
