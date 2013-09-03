@@ -2286,24 +2286,50 @@ fi
 AM_CONDITIONAL(HAVE_PNG_IVI, test "x$have_png_ivi" = "xyes")
 
 ####################################################################
-# Check for tracker-extract: jpeg-ivi
+# Check for tracker-extract: libjpeg-ivi
 ####################################################################
+# FIXME: This should be package based. Unfortunately in several main
+# distros, it is not.
 
-AC_ARG_ENABLE(jpeg-ivi,
-              AS_HELP_STRING([--enable-jpeg-ivi],
+OLD_CFLAGS="$CFLAGS"
+OLD_LIBS="$LIBS"
+CFLAGS=""
+LIBS=""
+
+AC_ARG_ENABLE(libjpeg-ivi,
+              AS_HELP_STRING([--enable-libjpeg-ivi],
                              [enable JPEG-IVI support [[default=auto]]]),,
-              [enable_jpeg_ivi=auto])
+              [enable_libjpeg_ivi=auto])
 
-if test "x$enable_jpeg_ivi" != "xno"; then
-   AC_SUBST(JPEG_IVI_CFLAGS)
-   AC_SUBST(JPEG_IVI_LIBS)
-   AC_DEFINE(HAVE_JPEG_IVI, [], [Define if we have JPEG-IVI extractor])
-   have_jpeg_ivi=yes
+if test "x$enable_libjpeg_ivi" != "xno" ; then
+   AC_CHECK_HEADER(jpeglib.h,
+   AC_CHECK_LIB(jpeg, jpeg_CreateCompress))
+
+   have_libjpeg_ivi=${ac_cv_lib_jpeg_jpeg_CreateCompress:-no}
+
+   LIBJPEG_IVI_CFLAGS="$CFLAGS"
+   LIBJPEG_IVI_LIBS="$LIBS"
+
+   AC_SUBST(LIBJPEG_IVI_CFLAGS)
+   AC_SUBST(LIBJPEG_IVI_LIBS)
+
+   if test "x$have_libjpeg_ivi" = "xyes"; then
+      AC_DEFINE(HAVE_LIBJPEG_IVI, [], [Define if we have libjpeg-ivi])
+   fi
 else
-   have_jpeg_ivi="no  (disabled)"
+   have_libjpeg_ivi="no  (disabled)"
 fi
 
-AM_CONDITIONAL(HAVE_JPEG_IVI, test "x$have_jpeg_ivi" = "xyes")
+if test "x$enable_libjpeg_ivi" = "xyes"; then
+   if test "x$have_libjpeg_ivi" != "xyes"; then
+      AC_MSG_ERROR([Couldn't find libjpeg >= $LIBJPEG_REQUIRED.])
+   fi
+fi
+
+AM_CONDITIONAL(HAVE_LIBJPEG_IVI, test "x$have_libjpeg_ivi" = "xyes")
+
+CFLAGS="$OLD_CFLAGS"
+LIBS="$OLD_LIBS"
 
 #####################################################################
 # Check for tracker-extract: png-faster-ivi
@@ -2314,15 +2340,17 @@ AM_CONDITIONAL(HAVE_JPEG_IVI, test "x$have_jpeg_ivi" = "xyes")
 
 AC_ARG_ENABLE(png-faster-ivi,
              AS_HELP_STRING([--enable-png-faster-ivi],
-                            [enable a faster PNG-IVI extractor [[default=auto]]]),
-                            [enable_png_faster_ivi=yes],
-                            [enable_png_faster_ivi=no])
+                            [enable a faster PNG-IVI extractor [[default=yes]]]),,
+                            [enable_png_faster_ivi=auto])
 
 if test "x$enable_png_faster_ivi" != "xno"; then
+  have_png_faster_ivi=yes
   AC_DEFINE(HAVE_PNG_FASTER_IVI, 1, [Faster PNG-IVI extractor])
+else
+  have_png_faster_ivi=no
 fi
 
-AM_CONDITIONAL(HAVE_PNG_FASTER_IVI, test "x$enable_png_faster_ivi" = "xyes")
+AM_CONDITIONAL(HAVE_PNG_FASTER_IVI, test "x$have_png_faster_ivi" = "xyes")
 
 ##################################################################
 # Check for tracker-extract: libgif-ivi
@@ -2570,15 +2598,17 @@ fi
 
 AC_ARG_ENABLE(png-faster,
              AS_HELP_STRING([--enable-png-faster],
-                            [enable a faster PNG extractor [[default=no]]]),
-                            [enable_png_faster=yes],
-                            [enable_png_faster=no])
+                            [enable a faster PNG extractor [[default=no]]]),,
+                            [enable_png_faster=auto])
 
 if test "x$enable_png_faster" != "xno"; then
+  have_png_faster="yes"
   AC_DEFINE(HAVE_PNG_FASTER, 1, [Faster PNG extractor])
+else
+  have_png_faster="no"
 fi
 
-AM_CONDITIONAL(HAVE_PNG_FASTER, test "x$enable_png_faster" = "xyes")
+AM_CONDITIONAL(HAVE_PNG_FASTER, test "x$have_png_faster" = "xyes")
 
 ####################################################################
 # Check if we should use initctl or sysvinit
@@ -2833,7 +2863,7 @@ Metadata Extractors:
 
 	Support libstreamanalyzer:              $have_libstreamanalyzer
 	Support PNG:                            $have_libpng
-	Support faster PNG extraction:          $enable_png_faster
+	Support faster PNG extraction:          $have_png_faster
 	Support PDF:                            $have_poppler
 	Support XPS:                            $have_libgxps
 	Support GIF:                            $have_libgif (xmp: $have_exempi)
@@ -2864,7 +2894,7 @@ IVI-specific extractors:
 	Include MP3-IVI extractor               $have_mp3_ivi
 	Include PNG-IVI extractor               $have_png_ivi
 	Include PNG-faster-IVI                  $enable_png_faster_ivi
-	Include JPEG-IVI extractor              $have_jpeg_ivi
+	Include JPEG-IVI extractor              $have_libjpeg_ivi
 	Include GIF-IVI extractor               $have_libgif_ivi
 	Include libav-IVI extractor             $have_libav_ivi
 	Include libvorbis-IVI extractor         $have_libvorbis_ivi
