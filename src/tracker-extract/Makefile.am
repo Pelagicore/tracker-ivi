@@ -199,7 +199,7 @@ modules_LTLIBRARIES += libextract-png-ivi.la
 rules_DATA += 08-png-ivi.rule
 endif
 
-if HAVE_JPEG_IVI
+if HAVE_LIBJPEG_IVI
 modules_LTLIBRARIES += libextract-jpeg-ivi.la
 rules_DATA += 09-jpeg-ivi.rule
 endif
@@ -577,14 +577,14 @@ libextract_png_ivi_la_LIBADD =  \
 libextract_jpeg_ivi_la_SOURCES = tracker-extract-jpeg-ivi.c
 libextract_jpeg_ivi_la_CFLAGS = \
 	$(TRACKER_EXTRACT_MODULES_CFLAGS) \
-	$(LIBJPEG_CFLAGS)
+	$(LIBJPEG_IVI_CFLAGS)
 libextract_jpeg_ivi_la_LDFLAGS = $(module_flags)
 libextract_jpeg_ivi_la_LIBADD = \
 	$(top_builddir)/src/libtracker-extract/libtracker-extract-@TRACKER_API_VERSION@.la \
 	$(top_builddir)/src/libtracker-common/libtracker-common.la \
 	$(BUILD_LIBS) \
 	$(TRACKER_EXTRACT_MODULES_LIBS) \
-	$(LIBJPEG_LIBS)
+	$(LIBJPEG_IVI_LIBS)
 
 # PNG Faster-ivi
 libextract_png_faster_ivi_la_SOURCES = tracker-extract-png-faster-ivi.c
