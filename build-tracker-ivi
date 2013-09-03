@@ -38,16 +38,22 @@ CONFIGURE_FLAGS :=					\
 	--disable-libjpeg				\
 	--disable-libvorbis				\
 	--disable-png-faster				\
+	--disable-libpng				\
+	--disable-png-ivi				\
+	--disable-mp3					\
 							\
 	--enable-libexif				\
 	--enable-gdkpixbuf				\
 	--enable-generic-media-extractor=gstreamer	\
 	--enable-libgif-ivi				\
-	--enable-jpeg-ivi				\
+	--enable-libjpeg-ivi				\
 	--enable-libvorbis-ivi				\
 	--enable-png-faster-ivi				\
 							\
-	--with-unicode-support=libicu
+	--with-unicode-support=libicu			\
+							\
+	--disable-non-ivi-ontologies			\
+	--enable-ivi-ontologies
 
 tracker-ivi:
 	./autogen.sh $(CONFIGURE_FLAGS)
