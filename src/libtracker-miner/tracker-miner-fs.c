@@ -263,6 +263,8 @@ static void           miner_paused                        (TrackerMiner         
 static void           miner_resumed                       (TrackerMiner         *miner);
 static void           miner_ignore_next_update            (TrackerMiner         *miner,
                                                            const GStrv           subjects);
+static void           give_hint                           (TrackerMiner         *miner,
+                                                           const gchar          *hint);
 static ItemMovedData *item_moved_data_new                 (GFile                *file,
                                                            GFile                *source_file);
 static void           item_moved_data_free                (ItemMovedData        *data);
@@ -332,6 +334,7 @@ tracker_miner_fs_class_init (TrackerMinerFSClass *klass)
 	miner_class->paused  = miner_paused;
 	miner_class->resumed = miner_resumed;
 	miner_class->ignore_next_update = miner_ignore_next_update;
+	miner_class->give_hint = give_hint;
 
 	g_object_class_install_property (object_class,
 	                                 PROP_THROTTLE,
@@ -794,6 +797,22 @@ task_pool_limit_reached_notify_cb (GObject    *object,
 	if (!tracker_task_pool_limit_reached (TRACKER_TASK_POOL (object))) {
 		item_queue_handlers_set_up (TRACKER_MINER_FS (user_data));
 	}
+}
+
+static void
+give_hint (TrackerMiner *miner,
+           const gchar *hint)
+{
+	TrackerPriorityQueue *queue;
+	TrackerMinerFS *fs;
+	guint length;
+
+	fs = TRACKER_MINER_FS (miner);
+	queue = fs->priv->items_created;
+
+	length = tracker_priority_queue_get_length (queue);
+	g_print ("Giving hint in TrackerMinerFs: %s, created queue length: "
+	            "%d\n", hint, length);
 }
 
 static void

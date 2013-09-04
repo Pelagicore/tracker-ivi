@@ -72,6 +72,9 @@ static GQuark miner_error_quark = 0;
 static const gchar introspection_xml[] =
   "<node>"
   "  <interface name='org.freedesktop.Tracker1.Miner'>"
+  "    <method name='GiveHint'>"
+  "      <arg type='s' name='hint' direction='in' />"
+  "    </method>"
   "    <method name='GetStatus'>"
   "      <arg type='s' name='status' direction='out' />"
   "    </method>"
@@ -154,7 +157,8 @@ enum {
 	RESUMED,
 	PROGRESS,
 	IGNORE_NEXT_UPDATE,
-	LAST_SIGNAL
+	LAST_SIGNAL,
+	HINT
 };
 
 static guint signals[LAST_SIGNAL] = { 0 };
@@ -343,6 +347,25 @@ tracker_miner_class_init (TrackerMinerClass *klass)
 		              g_cclosure_marshal_VOID__BOXED,
 		              G_TYPE_NONE, 1,
 		              G_TYPE_STRV);
+
+	/**
+	 * TrackerMiner::give-hint
+	 * @miner: the #TrackerMiner
+	 * @hint:  String hint which will be passed to the miner
+	 *
+	 * Allows a user to affect the indexing in a miner-specific way.
+	 *
+	 * Since: 0.17
+	 **/
+	signals[HINT] =
+		g_signal_new ("give-hint",
+			      G_OBJECT_CLASS_TYPE (object_class),
+			      G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (TrackerMinerClass, give_hint),
+			      NULL, NULL,
+			      tracker_marshal_VOID__STRING_STRING,
+			      G_TYPE_NONE, 1,
+			      G_TYPE_STRING);
 
 	g_object_class_install_property (object_class,
 	                                 PROP_NAME,
@@ -1182,6 +1205,25 @@ miner_finalize (GObject *object)
 }
 
 static void
+handle_method_call_give_hint (TrackerMiner                   *miner,
+                              GDBusMethodInvocation          *invocation,
+                              GVariant                       *parameters)
+{
+	GStrv hint = NULL;
+	TrackerDBusRequest *request;
+
+	g_variant_get (parameters, "(s)", &hint);
+	g_signal_emit(miner, signals[HINT], 0, hint);
+	
+	request = tracker_g_dbus_request_begin (invocation,
+	                                        "%s", __PRETTY_FUNCTION__);
+
+	tracker_dbus_request_end (request, NULL);
+	g_dbus_method_invocation_return_value (invocation, NULL);
+	g_free (hint);
+}
+
+static void
 handle_method_call_ignore_next_update (TrackerMiner          *miner,
                                        GDBusMethodInvocation *invocation,
                                        GVariant              *parameters)
@@ -1411,6 +1453,8 @@ handle_method_call (GDBusConnection       *connection,
 		handle_method_call_ignore_next_update (miner, invocation, parameters);
 	} else if (g_strcmp0 (method_name, "Resume") == 0) {
 		handle_method_call_resume (miner, invocation, parameters);
+	} else if (g_strcmp0 (method_name, "GiveHint") == 0) {
+		handle_method_call_give_hint (miner, invocation, parameters);
 	} else if (g_strcmp0 (method_name, "Pause") == 0) {
 		handle_method_call_pause (miner, invocation, parameters);
 	} else if (g_strcmp0 (method_name, "PauseForProcess") == 0) {
