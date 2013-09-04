@@ -14,11 +14,11 @@ ivi:File a rdfs:Class .
 ivi:Artist a rdfs:Class .
 ivi:Album a rdfs:Class .
 ivi:Track a rdfs:Class ;
-	rdfs:subclassOf ivi:File .
+	rdfs:subClassOf ivi:File .
 ivi:Image a rdfs:Class ;
-	rdfs:subclassOf ivi:File .
+	rdfs:subClassOf ivi:File .
 ivi:Video a rdfs:Class ;
-	rdfs:subclassOf ivi:File .
+	rdfs:subClassOf ivi:File .
 
 #
 # Artist & artist properties
