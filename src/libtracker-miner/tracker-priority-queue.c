@@ -362,3 +362,61 @@ tracker_priority_queue_pop (TrackerPriorityQueue *queue,
 
 	return g_queue_pop_head (&queue->queue);
 }
+
+gpointer tracker_priority_queue_pop_random (TrackerPriorityQueue *queue)
+{
+	PrioritySegment *segment;
+	GList           *node;
+	guint qlen      = g_queue_get_length (&queue->queue);
+	gint32 position = 0;
+	guint i_seg     = 0;
+	guint i         = 0;
+
+	if (qlen > 1)
+		position = g_random_int_range (0, qlen-1);
+	else if (qlen == 1)
+		position = 0;
+	else
+		return NULL; /* Queue empty */
+
+	segment = &g_array_index (queue->segments, PrioritySegment, i_seg);
+	node = queue->queue.head;
+	while (node != NULL) {
+		if (i == position) {
+			/* Only element in segment */
+			if (node == segment->first_elem &&
+			    node == segment->last_elem) {
+				g_array_remove_index (queue->segments, i_seg);
+			}
+			/* First elem, later available; adjust bounds */
+			else if (node == segment->first_elem && node->next) {
+				segment->first_elem = node->next;
+			/* First elem, later unavailable; remove segment */
+			} else if (node == segment->first_elem && !node->next) {
+				g_array_remove_index(queue->segments, i_seg);
+			/* Last elem, next available; adjust bounds */
+			} else if (node == segment->last_elem && node->prev) {
+				segment->last_elem = node->prev;
+			/* Last elem, next unavailable; remove segment */
+			} else if (node == segment->last_elem && !node->prev) {
+				g_array_remove_index (queue->segments, i_seg);
+			}
+
+			/* Element was found; pick, remove and exit */
+			g_queue_unlink (&queue->queue, node);
+			break;
+		} else {
+			/* if this is the wrong position, but we're at the last
+			 * element of a segment, advance the segment counter
+			 * one step to the right */
+			if (node == segment->last_elem)
+				segment = &g_array_index (queue->segments,
+							  PrioritySegment,
+							  ++i_seg);
+		}
+		i++;
+		node = node->next;
+	}
+
+	return node->data;
+}

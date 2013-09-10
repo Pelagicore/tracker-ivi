@@ -59,6 +59,7 @@ gpointer tracker_priority_queue_peek    (TrackerPriorityQueue *queue,
                                          gint                 *priority_out);
 gpointer tracker_priority_queue_pop     (TrackerPriorityQueue *queue,
                                          gint                 *priority_out);
+gpointer tracker_priority_queue_pop_random (TrackerPriorityQueue *queue);
 
 
 G_END_DECLS

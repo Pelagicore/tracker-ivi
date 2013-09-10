@@ -1933,8 +1933,9 @@ item_queue_get_next_file (TrackerMinerFS  *fs,
 	}
 
 	/* Created items next */
-	queue_file = tracker_priority_queue_pop (fs->priv->items_created,
-	                                         &priority);
+	queue_file = tracker_priority_queue_pop_random (fs->priv->items_created);
+/*	queue_file = tracker_priority_queue_pop (fs->priv->items_created,
+	                                         &priority);*/
 	if (queue_file) {
 		*source_file = NULL;
 
