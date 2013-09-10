@@ -2308,42 +2308,8 @@ item_queue_handlers_cb (gpointer user_data)
 		break;
 	case QUEUE_CREATED:
 	case QUEUE_UPDATED:
-		parent = g_file_get_parent (file);
-
-		if (!parent ||
-		    tracker_indexing_tree_file_is_root (fs->priv->indexing_tree, file) ||
-		    tracker_file_notifier_get_file_iri (fs->priv->file_notifier, parent)) {
-			keep_processing = item_add_or_update (fs, file, priority,
-			                                      (queue == QUEUE_CREATED));
-		} else {
-			TrackerPriorityQueue *item_queue;
-			gchar *uri;
-
-			uri = g_file_get_uri (parent);
-			g_message ("Parent '%s' not indexed yet", uri);
-			g_free (uri);
-
-			if (queue == QUEUE_CREATED) {
-				item_queue = fs->priv->items_created;
-			} else {
-				item_queue = fs->priv->items_updated;
-			}
-
-			/* Parent isn't indexed yet, reinsert the task into the queue,
-			 * but forcily prepended by its parent so its indexing is
-			 * ensured, tasks are inserted at a higher priority so they
-			 * are processed promptly anyway.
-			 */
-			item_reenqueue (fs, item_queue, g_object_ref (parent), priority - 1);
-			item_reenqueue (fs, item_queue, g_object_ref (file), priority);
-
-			keep_processing = TRUE;
-		}
-
-		if (parent) {
-			g_object_unref (parent);
-		}
-
+		keep_processing = item_add_or_update (fs, file, priority,
+						      (queue == QUEUE_CREATED));
 		break;
 	case QUEUE_IGNORE_NEXT_UPDATE:
 		keep_processing = item_ignore_next_update (fs, file, source_file);
