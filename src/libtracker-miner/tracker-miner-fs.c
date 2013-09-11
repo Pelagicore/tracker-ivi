@@ -311,6 +311,8 @@ static void           task_pool_cancel_foreach                (gpointer        d
 static void           task_pool_limit_reached_notify_cb       (GObject        *object,
                                                                GParamSpec     *pspec,
                                                                gpointer        user_data);
+static gboolean       match_uri                           (TrackerPriorityQueueCriteria *criteria,
+                                                           gpointer user_data);
 
 static GInitableIface* miner_fs_initable_parent_iface;
 static guint signals[LAST_SIGNAL] = { 0, };
@@ -804,15 +806,18 @@ give_hint (TrackerMiner *miner,
            const gchar *hint)
 {
 	TrackerPriorityQueue *queue;
-	TrackerMinerFS *fs;
-	guint length;
+	TrackerMinerFS       *fs;
+	guint                 length;
+	int                   numitems = 0;
 
 	fs = TRACKER_MINER_FS (miner);
-	queue = fs->priv->items_created;
 
-	length = tracker_priority_queue_get_length (queue);
-	g_print ("Giving hint in TrackerMinerFs: %s, created queue length: "
-	            "%d\n", hint, length);
+	numitems = tracker_priority_queue_prioritize (fs->priv->items_created,
+	                                              match_uri,
+                                                      -1000,
+                                                      (gpointer) hint);
+	if (numitems)
+		g_debug ("Prioritizing %d items\n", numitems);
 }
 
 static void
@@ -1856,6 +1861,19 @@ item_reenqueue (TrackerMinerFS       *fs,
 	return item_reenqueue_full (fs, item_queue, queue_file, queue_file, priority);
 }
 
+static gboolean match_uri (TrackerPriorityQueueCriteria *criteria,
+                           gpointer user_data)
+{
+	g_return_val_if_fail (FALSE, criteria->node != NULL);
+	GFile *file = criteria->node->data;
+	gchar *regex = user_data;
+
+	if (file && regex) {
+		return (g_regex_match_simple (regex, g_file_get_uri (file), 0, 0));
+	}
+	return FALSE;
+}
+
 static QueueState
 item_queue_get_next_file (TrackerMinerFS  *fs,
                           GFile          **file,
@@ -1933,9 +1951,9 @@ item_queue_get_next_file (TrackerMinerFS  *fs,
 	}
 
 	/* Created items next */
-	queue_file = tracker_priority_queue_pop_random (fs->priv->items_created);
-/*	queue_file = tracker_priority_queue_pop (fs->priv->items_created,
-	                                         &priority);*/
+	queue_file = tracker_priority_queue_pop (fs->priv->items_created,
+	                                         &priority);
+
 	if (queue_file) {
 		*source_file = NULL;
 

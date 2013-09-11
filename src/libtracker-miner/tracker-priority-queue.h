@@ -26,7 +26,16 @@
 
 G_BEGIN_DECLS
 
+struct _TrackerPriorityQueueCriteria
+{
+	guint  queue_position;
+	guint  seg_position;
+	guint  queue_length;
+	GList *node;
+};
+
 typedef struct _TrackerPriorityQueue TrackerPriorityQueue;
+typedef struct _TrackerPriorityQueueCriteria TrackerPriorityQueueCriteria;
 
 TrackerPriorityQueue *tracker_priority_queue_new   (void);
 
@@ -60,6 +69,11 @@ gpointer tracker_priority_queue_peek    (TrackerPriorityQueue *queue,
 gpointer tracker_priority_queue_pop     (TrackerPriorityQueue *queue,
                                          gint                 *priority_out);
 gpointer tracker_priority_queue_pop_random (TrackerPriorityQueue *queue);
+guint tracker_priority_queue_prioritize (TrackerPriorityQueue *queue,
+                                         gboolean    (*matcher) (TrackerPriorityQueueCriteria *,
+                                                                 gpointer),
+                                         gint                  priority,
+                                         gpointer              user_data);
 
 
 G_END_DECLS

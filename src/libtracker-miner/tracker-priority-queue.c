@@ -363,43 +363,47 @@ tracker_priority_queue_pop (TrackerPriorityQueue *queue,
 	return g_queue_pop_head (&queue->queue);
 }
 
-gpointer tracker_priority_queue_pop_random (TrackerPriorityQueue *queue)
+static gpointer tracker_priority_queue_pop_criteria (
+            TrackerPriorityQueue  *queue,
+            gboolean             (*criteria) (TrackerPriorityQueueCriteria *, 
+                                              gpointer),
+	    gpointer              *user_data)
 {
-	PrioritySegment *segment;
-	GList           *node;
-	guint qlen      = g_queue_get_length (&queue->queue);
-	gint32 position = 0;
-	guint i_seg     = 0;
-	guint i         = 0;
+	PrioritySegment              *segment;
+	TrackerPriorityQueueCriteria  qcriteria = { 0 };
+	GList                        *node      = NULL;
 
-	if (qlen > 1)
-		position = g_random_int_range (0, qlen-1);
-	else if (qlen == 1)
-		position = 0;
-	else
-		return NULL; /* Queue empty */
+	qcriteria.queue_length = g_queue_get_length (&queue->queue);
+	if (qcriteria.queue_length == 0)
+		return NULL; /* Empty queue */
 
-	segment = &g_array_index (queue->segments, PrioritySegment, i_seg);
+	segment = &g_array_index (queue->segments, PrioritySegment,
+	                          qcriteria.seg_position);
 	node = queue->queue.head;
+	qcriteria.queue_position = 0;
 	while (node != NULL) {
-		if (i == position) {
+		qcriteria.node = node;
+		if (criteria (&qcriteria, user_data)) {
 			/* Only element in segment */
 			if (node == segment->first_elem &&
 			    node == segment->last_elem) {
-				g_array_remove_index (queue->segments, i_seg);
+				g_array_remove_index (queue->segments,
+				                     qcriteria.seg_position);
 			}
 			/* First elem, later available; adjust bounds */
 			else if (node == segment->first_elem && node->next) {
 				segment->first_elem = node->next;
 			/* First elem, later unavailable; remove segment */
 			} else if (node == segment->first_elem && !node->next) {
-				g_array_remove_index(queue->segments, i_seg);
+				g_array_remove_index(queue->segments,
+				                     qcriteria.seg_position);
 			/* Last elem, next available; adjust bounds */
 			} else if (node == segment->last_elem && node->prev) {
 				segment->last_elem = node->prev;
 			/* Last elem, next unavailable; remove segment */
 			} else if (node == segment->last_elem && !node->prev) {
-				g_array_remove_index (queue->segments, i_seg);
+				g_array_remove_index (queue->segments,
+				                     qcriteria.seg_position);
 			}
 
 			/* Element was found; pick, remove and exit */
@@ -410,13 +414,86 @@ gpointer tracker_priority_queue_pop_random (TrackerPriorityQueue *queue)
 			 * element of a segment, advance the segment counter
 			 * one step to the right */
 			if (node == segment->last_elem)
-				segment = &g_array_index (queue->segments,
-							  PrioritySegment,
-							  ++i_seg);
+				segment = &g_array_index (
+			                      queue->segments,
+			                      PrioritySegment,
+			                    ++qcriteria.seg_position);
 		}
-		i++;
+		qcriteria.queue_position++;
 		node = node->next;
 	}
 
-	return node->data;
+	return node;
+}
+
+static gboolean random_item_criteria (TrackerPriorityQueueCriteria *c,
+                                      gpointer                     user_data)
+{
+	static gint32 position = -1;
+	if (position == -1) {
+		if (c->queue_length > 1)
+			position = g_random_int_range (0, c->queue_length-1);
+		else if (c->queue_length == 1)
+			position = 0;
+		else
+			return FALSE;
+	}
+
+	if (c->queue_position == position) {
+		position = -1;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+/*
+ * Retrieves a random element from the queue. Will unlink the element from the
+ * queue, and thus remove it from the queue. Priority segments are handled
+ * accordingly. Caller is responsible for freeing the retrieved gpointer.
+ */
+gpointer tracker_priority_queue_pop_random (TrackerPriorityQueue *queue)
+{
+	GList *elem = tracker_priority_queue_pop_criteria (
+	                   queue,
+	                   random_item_criteria,
+			   NULL);
+	if (elem)
+		return elem->data;
+	else
+		return NULL;
+}
+
+/*
+ * Set the priority of each element matched by matcher to the specified value
+ */
+guint tracker_priority_queue_prioritize (TrackerPriorityQueue *queue,
+                                         gboolean    (*matcher) (TrackerPriorityQueueCriteria *,
+                                                                 gpointer),
+                                         gint                  priority,
+                                         gpointer              user_data)
+{
+	GList *elem = NULL;
+	GList *iter = NULL;
+	GList *todo = NULL;
+	guint num_items = 0;
+	do {
+		elem = tracker_priority_queue_pop_criteria (
+				   queue,
+				   matcher,
+				   user_data);
+		if (elem) {
+			todo = g_list_append (todo, elem->data);
+		}
+	} while (elem != NULL);
+
+	num_items = g_list_length (todo);
+
+	iter = todo;
+	while (iter != NULL) {
+		tracker_priority_queue_add (queue, iter->data, priority);
+		iter = iter->next;
+	}
+
+	g_list_free (todo);
+	return num_items;
 }
