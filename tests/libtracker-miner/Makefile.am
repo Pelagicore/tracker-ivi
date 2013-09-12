@@ -25,6 +25,7 @@ TEST_PROGS +=                                          \
 	tracker-thumbnailer-test                       \
 	tracker-monitor-test			       \
 	tracker-priority-queue-test		       \
+	tracker-priority-queue-hinted-indexing-test    \
 	tracker-task-pool-test			       \
 	tracker-indexing-tree-test
 
@@ -101,6 +102,9 @@ endif
 
 tracker_priority_queue_test_SOURCES = 		       \
 	tracker-priority-queue-test.c
+
+tracker_priority_queue_hinted_indexing_test_SOURCES =  \
+	tracker-priority-queue-hinted-indexing-test.c
 
 tracker_task_pool_test_SOURCES = 		       \
 	tracker-task-pool-test.c
