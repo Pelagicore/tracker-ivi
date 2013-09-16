@@ -25,6 +25,12 @@ Boston, MA  02110-1301, USA.
       <_description>Log verbosity.</_description>
     </key>
 
+    <key name="processing-queue-order" enum="org.freedesktop.Tracker.TrackerProcessingQueueOrder">
+      <default>'random'</default>
+      <_summary>Processing queue order</_summary>
+      <_description>The order in which to traverse the elements of the processing queue</_description>
+    </key>
+
     <key name="initial-sleep" type="i">
       <_summary>Initial sleep</_summary>
       <_description>Initial sleep time, in seconds.</_description>

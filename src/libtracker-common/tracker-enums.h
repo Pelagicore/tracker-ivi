@@ -35,6 +35,11 @@ typedef enum {
 	TRACKER_SCHED_IDLE_NEVER,
 } TrackerSchedIdle;
 
+typedef enum {
+	TRACKER_PROCESSING_QUEUE_RANDOM,
+	TRACKER_PROCESSING_QUEUE_SEQUENTIAL
+} TrackerProcessingQueueOrder;
+
 G_END_DECLS
 
 #endif /* __TRACKER_ENUMS_H__ */

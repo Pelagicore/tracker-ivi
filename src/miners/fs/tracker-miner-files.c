@@ -340,6 +340,9 @@ miner_files_initable_init (GInitable     *initable,
 		return FALSE;
 	}
 
+	tracker_miner_fs_set_processing_queue_order (fs,
+	    tracker_config_get_processing_queue_order (mf->private->config));
+
 	/* If this happened AFTER we have initialized mount points, initialize
 	 * stale volume removal now. */
 	if (mf->private->mount_points_initialized) {

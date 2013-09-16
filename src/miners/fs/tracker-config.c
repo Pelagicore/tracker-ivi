@@ -72,6 +72,8 @@ typedef struct {
 	GSList   *ignored_directory_paths;
 	GSList   *ignored_file_patterns;
 	GSList   *ignored_file_paths;
+
+	TrackerProcessingQueueOrder processing_queue_order;
 } TrackerConfigPrivate;
 
 static void config_set_property                         (GObject           *object,
@@ -122,6 +124,7 @@ enum {
 	PROP_IGNORED_FILES,
 	PROP_CRAWLING_INTERVAL,
 	PROP_REMOVABLE_DAYS_THRESHOLD,
+	PROP_PROCESSING_QUEUE_ORDER,
 
 	/* Writeback */
 	PROP_ENABLE_WRITEBACK
@@ -318,6 +321,14 @@ tracker_config_class_init (TrackerConfigClass *klass)
 	                                                   365,
 	                                                   DEFAULT_REMOVABLE_DAYS_THRESHOLD,
 	                                                   G_PARAM_READWRITE));
+	g_object_class_install_property (object_class,
+	                                 PROP_PROCESSING_QUEUE_ORDER,
+	                                 g_param_spec_enum ("processing-queue-order",
+	                                                    "Processing queue order",
+	                                                    "Processing queue order",
+	                                                    TRACKER_TYPE_PROCESSING_QUEUE_ORDER,
+	                                                    TRACKER_PROCESSING_QUEUE_RANDOM,
+	                                                    G_PARAM_READWRITE));
 
 	/* Writeback */
 	g_object_class_install_property (object_class,
@@ -483,6 +494,9 @@ config_get_property (GObject    *object,
 		break;
 	case PROP_REMOVABLE_DAYS_THRESHOLD:
 		g_value_set_int (value, tracker_config_get_removable_days_threshold (config));
+		break;
+	case PROP_PROCESSING_QUEUE_ORDER:
+		g_value_set_enum (value, tracker_config_get_processing_queue_order (config));
 		break;
 
 	/* Writeback */
@@ -747,6 +761,7 @@ config_constructed (GObject *object)
 	g_settings_bind (settings, "ignored-files", object, "ignored-files", G_SETTINGS_BIND_GET);
 	g_settings_bind (settings, "ignored-directories", object, "ignored-directories", G_SETTINGS_BIND_GET);
 	g_settings_bind (settings, "ignored-directories-with-content", object, "ignored-directories-with-content", G_SETTINGS_BIND_GET);
+	g_settings_bind (settings, "processing-queue-order", object, "processing-queue-order", G_SETTINGS_BIND_GET);
 
 	/* Migrate keyfile-based configuration */
 	config_file = tracker_config_file_new ();
@@ -952,6 +967,15 @@ tracker_config_get_removable_days_threshold (TrackerConfig *config)
 	g_return_val_if_fail (TRACKER_IS_CONFIG (config), 0);
 
 	return g_settings_get_int (G_SETTINGS (config), "removable-days-threshold");
+}
+
+TrackerProcessingQueueOrder
+tracker_config_get_processing_queue_order (TrackerConfig *config)
+{
+	g_return_val_if_fail (TRACKER_IS_CONFIG (config),
+	                      TRACKER_PROCESSING_QUEUE_RANDOM);
+
+	return g_settings_get_enum (G_SETTINGS (config), "processing-queue-order");
 }
 
 void
