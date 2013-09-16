@@ -23,6 +23,7 @@
 #define __LIBTRACKER_MINER_PRIORITY_QUEUE_H__
 
 #include <glib.h>
+#include "libtracker-common/tracker-enums.h"
 
 G_BEGIN_DECLS
 
@@ -78,6 +79,8 @@ guint tracker_priority_queue_get_num_remaining (TrackerPriorityQueue *);
 void  tracker_priority_queue_set_num_remaining  (TrackerPriorityQueue *,
                                                 guint);
 guint tracker_priority_queue_dec_num_remaining (TrackerPriorityQueue *);
+void  tracker_priority_queue_set_processing_order (TrackerPriorityQueue *,
+                                                   TrackerProcessingQueueOrder order);
 
 G_END_DECLS
 

@@ -33,6 +33,7 @@
 #include "tracker-indexing-tree.h"
 
 #include "tracker-miner-common.h"
+#include "libtracker-common/tracker-enums.h"
 
 G_BEGIN_DECLS
 
@@ -149,6 +150,8 @@ void                  tracker_miner_fs_add_directory_without_parent (TrackerMine
                                                                      GFile          *file);
 void                  tracker_miner_fs_force_mtime_checking (TrackerMinerFS *fs,
                                                              GFile          *directory);
+void                  tracker_miner_fs_set_processing_queue_order (TrackerMinerFS *fs,
+                                                                   TrackerProcessingQueueOrder order);
 
 TrackerIndexingTree * tracker_miner_fs_get_indexing_tree    (TrackerMinerFS *fs);
 

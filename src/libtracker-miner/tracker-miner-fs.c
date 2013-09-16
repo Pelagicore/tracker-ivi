@@ -24,6 +24,7 @@
 #include <libtracker-common/tracker-file-utils.h>
 #include <libtracker-common/tracker-log.h>
 #include <libtracker-common/tracker-utils.h>
+#include <libtracker-common/tracker-enums.h>
 
 #include "tracker-crawler.h"
 #include "tracker-marshal.h"
@@ -1864,7 +1865,7 @@ item_reenqueue (TrackerMinerFS       *fs,
 static gboolean match_uri (TrackerPriorityQueueCriteria *criteria,
                            gpointer user_data)
 {
-	g_return_val_if_fail (FALSE, criteria->node != NULL);
+	g_return_val_if_fail (criteria->node, FALSE);
 	GFile *file = criteria->node->data;
 	gchar *regex = user_data;
 
@@ -1951,6 +1952,7 @@ item_queue_get_next_file (TrackerMinerFS  *fs,
 	}
 
 	/* Created items next */
+
 	queue_file = tracker_priority_queue_pop (fs->priv->items_created,
 	                                         &priority);
 
@@ -3518,6 +3520,7 @@ tracker_miner_fs_get_urn (TrackerMinerFS *fs,
 	}
 }
 
+
 /**
  * tracker_miner_fs_query_urn:
  * @fs: a #TrackerMinerFS
@@ -3788,6 +3791,15 @@ tracker_miner_fs_get_indexing_tree (TrackerMinerFS *fs)
 	g_return_val_if_fail (TRACKER_IS_MINER_FS (fs), NULL);
 
 	return fs->priv->indexing_tree;
+}
+
+void
+tracker_miner_fs_set_processing_queue_order (TrackerMinerFS *fs,
+                                             TrackerProcessingQueueOrder order)
+{
+	g_return_if_fail (TRACKER_IS_MINER_FS (fs));
+	tracker_priority_queue_set_processing_order (fs->priv->items_created,
+	                                             order);
 }
 
 #ifdef EVENT_QUEUE_ENABLE_TRACE

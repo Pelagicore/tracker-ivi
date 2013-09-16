@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include "tracker-priority-queue.h"
+#include "libtracker-common/tracker-enums.h"
 
 typedef struct PrioritySegment PrioritySegment;
 
@@ -37,6 +38,7 @@ struct _TrackerPriorityQueue
 	GQueue queue;
 	GArray *segments;
 	guint num_remaining;
+	TrackerProcessingQueueOrder order;
 
 	gint ref_count;
 };
@@ -53,6 +55,7 @@ tracker_priority_queue_new (void)
 
 	queue->ref_count = 1;
 	queue->num_remaining = 0;
+	queue->order = TRACKER_PROCESSING_QUEUE_RANDOM;
 
 	return queue;
 }
@@ -328,9 +331,9 @@ tracker_priority_queue_peek (TrackerPriorityQueue *queue,
 	return g_queue_peek_head (&queue->queue);
 }
 
-gpointer
-tracker_priority_queue_pop (TrackerPriorityQueue *queue,
-                            gint                 *priority_out)
+static gpointer
+tracker_priority_queue_pop_sequential (TrackerPriorityQueue *queue,
+                                       gint                 *priority_out)
 {
 	PrioritySegment *segment;
 	GList *node;
@@ -428,6 +431,26 @@ static gpointer tracker_priority_queue_pop_criteria (
 	return node;
 }
 
+gpointer tracker_priority_queue_pop (TrackerPriorityQueue *queue,
+                                     gint                 *priority_out)
+{
+	if (tracker_priority_queue_dec_num_remaining (queue) > 0) {
+		g_print ("Popping on demand!\n");
+		return tracker_priority_queue_pop_sequential (queue,
+		                                              priority_out);
+	} else {
+		switch (queue->order) {
+			case TRACKER_PROCESSING_QUEUE_RANDOM:
+				return tracker_priority_queue_pop_random (queue);
+			case TRACKER_PROCESSING_QUEUE_SEQUENTIAL:
+				return tracker_priority_queue_pop_sequential (queue,
+					   priority_out);
+			default:
+				g_assert_not_reached ();
+		}
+	}
+}
+
 static gboolean random_item_criteria (TrackerPriorityQueueCriteria *c,
                                       gpointer                     user_data)
 {
@@ -519,4 +542,11 @@ guint tracker_priority_queue_dec_num_remaining (TrackerPriorityQueue *queue)
 	if (num > 0)
 		tracker_priority_queue_set_num_remaining (queue, --num);
 	return num;
+}
+
+void tracker_priority_queue_set_processing_order (TrackerPriorityQueue *queue,
+                                                  TrackerProcessingQueueOrder order)
+{
+	g_return_if_fail (queue);
+	queue->order = order;
 }
