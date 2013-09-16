@@ -74,7 +74,10 @@ guint tracker_priority_queue_prioritize (TrackerPriorityQueue *queue,
                                                                  gpointer),
                                          gint                  priority,
                                          gpointer              user_data);
-
+guint tracker_priority_queue_get_num_remaining (TrackerPriorityQueue *);
+void  tracker_priority_queue_set_num_remaining  (TrackerPriorityQueue *,
+                                                guint);
+guint tracker_priority_queue_dec_num_remaining (TrackerPriorityQueue *);
 
 G_END_DECLS
 

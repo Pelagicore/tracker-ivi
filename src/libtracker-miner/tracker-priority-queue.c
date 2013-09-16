@@ -36,6 +36,7 @@ struct _TrackerPriorityQueue
 {
 	GQueue queue;
 	GArray *segments;
+	guint num_remaining;
 
 	gint ref_count;
 };
@@ -51,6 +52,7 @@ tracker_priority_queue_new (void)
 	                               sizeof (PrioritySegment));
 
 	queue->ref_count = 1;
+	queue->num_remaining = 0;
 
 	return queue;
 }
@@ -495,5 +497,26 @@ guint tracker_priority_queue_prioritize (TrackerPriorityQueue *queue,
 	}
 
 	g_list_free (todo);
+	tracker_priority_queue_set_num_remaining (queue, num_items);
 	return num_items;
+}
+
+guint tracker_priority_queue_get_num_remaining (TrackerPriorityQueue *queue)
+{
+	return queue->num_remaining;
+}
+
+void tracker_priority_queue_set_num_remaining (TrackerPriorityQueue *queue,
+                                               guint num)
+{
+	queue->num_remaining = num;
+}
+
+guint tracker_priority_queue_dec_num_remaining (TrackerPriorityQueue *queue)
+{
+	guint num = 0;
+	num = tracker_priority_queue_get_num_remaining (queue);
+	if (num > 0)
+		tracker_priority_queue_set_num_remaining (queue, --num);
+	return num;
 }
