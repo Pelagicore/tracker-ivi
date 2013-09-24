@@ -54,7 +54,9 @@ private_sources = 				       \
 	tracker-sparql-buffer.h                        \
 	tracker-sparql-buffer.c                        \
 	tracker-storage.c                              \
-	tracker-storage.h                              
+	tracker-storage.h                              \
+	tracker-processing-queue.c                     \
+	tracker-processing-queue.h                     
 
 miner_sources = 				       \
 	$(libtracker_miner_monitor_sources)            \
