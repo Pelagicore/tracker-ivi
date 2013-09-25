@@ -123,7 +123,7 @@ tracker_processing_queue_add (TrackerProcessingQueue *queue,
 {
 	struct ElemPtr   *eptr = g_malloc0 (sizeof (struct ElemPtr));
 	       GPtrArray *dir  = NULL;
-	       gpointer   key  = queue->priv->key_func (elem); 
+	       gpointer   key  = queue->priv->key_func (elem);
 	eptr->ptr = elem;
 
 	g_ptr_array_add (queue->priv->elem_array, eptr);
@@ -161,6 +161,28 @@ tracker_processing_queue_prioritize (TrackerProcessingQueue *queue,
 	g_queue_push_tail (queue->priv->hints, hint);
 }
 
+guint
+tracker_processing_queue_get_length (TrackerProcessingQueue *queue)
+{
+	GHashTableIter iter;
+	gpointer key, value;
+	guint length = 0;
+
+	g_hash_table_iter_init (&iter, queue->priv->elem_ht);
+	while (g_hash_table_iter_next (&iter, &key, &value)) {
+		GPtrArray *arr = value;
+		length += arr->len;
+	}
+
+	return length;
+}
+
+guint
+tracker_processing_queue_get_length_fast (TrackerProcessingQueue *queue)
+{
+	return queue->priv->elem_array->len;
+}
+
 TrackerProcessingQueue *
 tracker_processing_queue_new ()
 {
@@ -175,6 +197,28 @@ tracker_processing_queue_new_full (gpointer (*keying_func) (gpointer),
 	                     "keying-function", keying_func,
 	                     "lookup-function", lookup_func,
 	                     NULL);
+}
+
+gboolean
+tracker_processing_queue_contains (TrackerProcessingQueue *queue,
+                                   gpointer                elem)
+{
+	gpointer   key = queue->priv->key_func (elem);
+	GPtrArray *arr = g_hash_table_lookup (queue->priv->elem_ht, key);
+	guint      i   = 0;
+
+	/* Didn't find any elements with this key */
+	if (!arr)
+		return FALSE;
+
+	/* Do a linear search through the array indicated by the lookup */
+	for (i = 0; i < arr->len; i++) {
+		struct ElemPtr *e = g_ptr_array_index (arr, i);
+		if (e->ptr == elem)
+			return TRUE;
+	}
+
+	return FALSE;
 }
 
 /* Privates */

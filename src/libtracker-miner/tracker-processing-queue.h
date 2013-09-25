@@ -33,16 +33,20 @@ struct _TrackerProcessingQueueCriteria
 	GList *node;
 };
 
-GType                   tracker_processing_queue_get_type   (void) G_GNUC_CONST;
+GType                   tracker_processing_queue_get_type        (void) G_GNUC_CONST;
 
-TrackerProcessingQueue *tracker_processing_queue_new        (void);
-TrackerProcessingQueue *tracker_processing_queue_new_full   (gpointer (*keying_func) (gpointer),
-                                                             GEqualFunc lookup_func);
-gpointer                tracker_processing_queue_pop        (TrackerProcessingQueue *queue);
-gpointer                tracker_processing_queue_peek       (TrackerProcessingQueue *queue);
-void                    tracker_processing_queue_add        (TrackerProcessingQueue *queue,
-                                                             gpointer                elem);
-void                    tracker_processing_queue_prioritize (TrackerProcessingQueue *queue,
-                                                             gpointer                hint);
+TrackerProcessingQueue *tracker_processing_queue_new             (void);
+TrackerProcessingQueue *tracker_processing_queue_new_full        (gpointer (*keying_func) (gpointer),
+                                                                  GEqualFunc lookup_func);
+gpointer                tracker_processing_queue_pop             (TrackerProcessingQueue *queue);
+gpointer                tracker_processing_queue_peek            (TrackerProcessingQueue *queue);
+void                    tracker_processing_queue_add             (TrackerProcessingQueue *queue,
+                                                                  gpointer                elem);
+void                    tracker_processing_queue_prioritize      (TrackerProcessingQueue *queue,
+                                                                  gpointer                hint);
+guint                   tracker_processing_queue_get_length      (TrackerProcessingQueue *queue);
+guint                   tracker_processing_queue_get_length_fast (TrackerProcessingQueue *queue);
+gboolean                tracker_processing_queue_contains        (TrackerProcessingQueue *queue,
+                                                                  gpointer                elem);
 
 G_END_DECLS

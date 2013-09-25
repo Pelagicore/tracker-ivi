@@ -26,11 +26,11 @@ typedef struct {
 } HintFixture;
 
 typedef struct {
-	gchar **elements;
+	gpointer *elements;
 	guint numelements;
 } HintParameters;
 
-static HintParameters *init_parameters (gchar **elems, guint numelems)
+static HintParameters *init_parameters (gpointer *elems, guint numelems)
 {
 	HintParameters *hp = g_malloc (sizeof (HintParameters));
 	hp->elements = elems;
@@ -283,7 +283,7 @@ static void test_processing_queue_random_and_hinted_are_synced (HintFixture *fix
  * Ensure a hinted pop also removes the popped element from the array
  */
 static void test_processing_queue_random_and_hinted_are_synced2 (HintFixture *fix,
-                                                                gconstpointer user_data)
+                                                                 gconstpointer user_data)
 {
 	gpointer after  = NULL;
 	tracker_processing_queue_prioritize (fix->queue, "_A_");
@@ -301,32 +301,146 @@ static void test_processing_queue_random_and_hinted_are_synced2 (HintFixture *fi
 	after = tracker_processing_queue_pop (fix->queue);
 	g_assert (g_strcmp0 (after, "_AB_") == 0);
 }
-//static void test_processing_queue_correctly_counts_matches (HintFixture *fix,
-//                                                                 gconstpointer user_data)
-//{
-//	int hits = tracker_processing_queue_prioritize (fix->queue,
-//	                                              stringmatcher,
-//                                                      -1,
-//                                                      "_A.*");
-//	int hits2 = tracker_priority_queue_get_num_remaining (fix->queue);
-//	int hits3 = tracker_priority_queue_dec_num_remaining (fix->queue);
-//	int i = 100;
-//	for (; i != 0; i--) {
-//		g_assert (tracker_priority_queue_dec_num_remaining (fix->queue) >= 0);
-//	}
-//
-//	g_assert (tracker_priority_queue_get_num_remaining (fix->queue) == 0);
-//	g_assert (hits == 2);
-//	g_assert (hits == hits2);
-//	g_assert (hits-1 == hits3);
-//}
+
+/*
+ * Ensure we report the correct length for hinted lookups
+ */
+static void test_processing_queue_reports_correct_length_hinted (HintFixture *fix,
+                                                                 gconstpointer user_data)
+{
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 5);
+	tracker_processing_queue_prioritize (fix->queue, "_A_");
+	tracker_processing_queue_pop (fix->queue);
+
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 4);
+	tracker_processing_queue_prioritize (fix->queue, "_B_");
+	tracker_processing_queue_pop (fix->queue);
+
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 3);
+	tracker_processing_queue_prioritize (fix->queue, "_C_");
+	tracker_processing_queue_pop (fix->queue);
+
+	/* Try adding an element */
+	tracker_processing_queue_add (fix->queue, "_X_");
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 3);
+	tracker_processing_queue_prioritize (fix->queue, "_X_");
+	tracker_processing_queue_pop (fix->queue);
+
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 2);
+	tracker_processing_queue_prioritize (fix->queue, "_D_");
+	tracker_processing_queue_pop (fix->queue);
+
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 1);
+	tracker_processing_queue_prioritize (fix->queue, "_AB_");
+	tracker_processing_queue_pop (fix->queue);
+
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 0);
+}
+
+/*
+ * Ensure we report the correct length for random lookups
+ */
+static void test_processing_queue_reports_correct_length_random (HintFixture   *fix,
+                                                                 gconstpointer user_data)
+{
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 5);
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 4);
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 3);
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 2);
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 1);
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length (fix->queue) == 0);
+	tracker_processing_queue_pop (fix->queue);
+}
+
+/*
+ * Random pops uses the random array for indexing, and its size is updated for
+ * each pop, so this will report the correct size
+ */
+static void test_processing_queue_reports_correct_length_fast_random (HintFixture *fix,
+                                                               gconstpointer user_data)
+{
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) == 5);
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) == 4);
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) == 3);
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) == 2);
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) == 1);
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) == 0);
+	tracker_processing_queue_pop (fix->queue);
+}
+
+/*
+ * For hinted pops, we just guarantee an upper bound of the queue length, since
+ * the array is used for sizing here, and it is not updated when hinted pops
+ * are made
+ */
+static void test_processing_queue_reports_correct_length_fast_hinted (HintFixture *fix,
+                                                               gconstpointer user_data)
+{
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) <= 5);
+	tracker_processing_queue_prioritize (fix->queue, "_A_");
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) <= 5);
+	tracker_processing_queue_prioritize (fix->queue, "_B_");
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) <= 5);
+	tracker_processing_queue_prioritize (fix->queue, "_C_");
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) <= 5);
+	tracker_processing_queue_prioritize (fix->queue, "_D_");
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) <= 5);
+	tracker_processing_queue_prioritize (fix->queue, "_AB_");
+	tracker_processing_queue_pop (fix->queue);
+	g_assert (tracker_processing_queue_get_length_fast (fix->queue) <= 5);
+	tracker_processing_queue_pop (fix->queue);
+}
+
+/*
+ * Verify that we can find string elements added to the processing queue
+ */
+static void test_processing_queue_can_find_string_element (HintFixture *fix,
+                                                    gconstpointer user_data)
+{
+	gboolean result = 
+	     tracker_processing_queue_contains (fix->queue, "_C_");
+	g_assert (result == TRUE);
+}
+
+/*
+ * Verify that we can find gfile elements added to the processing queue
+ */
+static void test_processing_queue_can_find_gfile_element (HintFixture *fix,
+                                                    gconstpointer user_data)
+{
+	const HintParameters *params = user_data;
+	GFile *file = params->elements[2]; /* file:///x/FILE2 */
+	gboolean result = 
+	     tracker_processing_queue_contains (fix->queue, file);
+	g_assert (result == TRUE); 
+}
 
 int
 main (int    argc,
       char **argv)
 {
 	g_test_init (&argc, &argv, NULL);
-	gchar *testelements[] = {"_A_", "_B_", "_C_", "_D_", "_AB_"};
+	gpointer testelements[] = {"_A_", "_B_", "_C_", "_D_", "_AB_"};
+	gpointer testfiles[]    = {
+		g_file_new_for_uri ("file:///x/FILE1"),
+		g_file_new_for_uri ("file:///x/FILE2"),
+		g_file_new_for_uri ("file:///x/FILE3"),
+		g_file_new_for_uri ("file:///x/FILE4")
+	};
 
 	g_test_add_func ("/libtracker-miner/tracker-processing-queue/can-create",
 	                 test_processing_queue_can_create);
@@ -342,30 +456,45 @@ main (int    argc,
 	                 test_processing_queue_popping_is_random);
 	g_test_add_func ("/libtracker-miner/tracker-processing-queue/can-handle-identical-keys",
 	                 test_processing_queue_can_handle_identical_keys);
-	g_test_add ("/libtracker-miner/tracker-processing-queue/peeking-and-popping-yields-same-elem",
-	            HintFixture, init_parameters (testelements, 5), fixture_add_elements,
-	            test_processing_queue_peeking_and_popping_yields_the_same, NULL);
-	g_test_add ("/libtracker-miner/tracker-processing-qyeye/peeking-doesnt-modify-queue",
-	            HintFixture, init_parameters (testelements, 5), fixture_add_elements,
-	            test_processing_queue_peeking_doesnt_modify_queue, NULL);
-	g_test_add ("/libtracker-miner/tracker-processing-queue/can-prioritize-string",
-	            HintFixture, init_parameters (testelements, 5), fixture_add_elements,
-	            test_processing_queue_can_prioritize_string, NULL);
-	g_test_add ("/libtracker-miner/tracker-processing-queue/hinted-popping-removes-element",
-	            HintFixture, init_parameters (testelements, 5), fixture_add_elements,
-	            test_processing_queue_hinted_popping_removes_element, NULL);
-	g_test_add ("/libtracker-miner/tracker-processing-queue/random-pop-removes-element",
-	            HintFixture, init_parameters (testelements, 5), fixture_add_elements,
-	            test_processing_queue_random_pop_removes_element, NULL);
-	g_test_add ("/libtracker-miner/tracker-processing-queue/random-and-hinted-are-synced",
-	            HintFixture, init_parameters (testelements, 5), fixture_add_elements,
-	            test_processing_queue_random_and_hinted_are_synced, NULL);
-	g_test_add ("/libtracker-miner/tracker-processing-queue/random-and-hinted-are-synced2",
-	            HintFixture, init_parameters (testelements, 5), fixture_add_elements,
-	            test_processing_queue_random_and_hinted_are_synced2, NULL);
-//	g_test_add ("/libtracker-miner/tracker-priority-queue-hinted-indexing/correctly-counts-matches",
-//	            HintFixture, init_parameters (testelements, 5), fixture_add_elements,
-//	            test_processing_queue_correctly_counts_matches, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/peeking-and-popping-yields-same-elem",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_peeking_and_popping_yields_the_same, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-qyeye/peeking-doesnt-modify-queue",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_peeking_doesnt_modify_queue, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/can-prioritize-string",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_can_prioritize_string, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/hinted-popping-removes-element",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_hinted_popping_removes_element, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/random-pop-removes-element",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_random_pop_removes_element, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/random-and-hinted-are-synced",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_random_and_hinted_are_synced, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/random-and-hinted-are-synced2",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_random_and_hinted_are_synced2, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/reports-correct-length-hinted",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_reports_correct_length_hinted, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/reports-correct-length-random",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_reports_correct_length_random, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/reports-correct-length-fast-random",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_reports_correct_length_fast_random, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/reports-correct-length-fast-hinted",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_reports_correct_length_fast_hinted, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/can-find-string-element",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_can_find_string_element, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/can-find-gfile-element",
+	                 HintFixture, init_parameters (testfiles, 4), fixture_add_elements,
+	                 test_processing_queue_can_find_gfile_element, NULL);
 
 	return g_test_run ();
 }
