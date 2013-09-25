@@ -48,9 +48,13 @@ guint                   tracker_processing_queue_get_length      (TrackerProcess
 guint                   tracker_processing_queue_get_length_fast (TrackerProcessingQueue *queue);
 gboolean                tracker_processing_queue_contains        (TrackerProcessingQueue *queue,
                                                                   gpointer                elem);
-gboolean                tracker_processing_queue_foreach_remove (TrackerProcessingQueue *queue,
-                                                                 GEqualFunc              compare_func,
-                                                                 gpointer                compare_user_data,
-                                                                 GDestroyNotify          destroy_notify);
+gboolean                tracker_processing_queue_foreach_remove  (TrackerProcessingQueue *queue,
+                                                                  GEqualFunc              compare_func,
+                                                                  gpointer                compare_user_data,
+                                                                  GDestroyNotify          destroy_notify);
+gboolean                tracker_processing_queue_is_empty        (TrackerProcessingQueue *queue);
+void                    tracker_processing_queue_foreach         (TrackerProcessingQueue *queue,
+                                                                  GFunc                   func,
+                                                                  gpointer                user_data);
 
 G_END_DECLS

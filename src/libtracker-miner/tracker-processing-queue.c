@@ -238,11 +238,32 @@ tracker_processing_queue_foreach_remove (TrackerProcessingQueue *queue,
 			 * if it was not, the ht and the array are out of sync
 			 * and something has gone horribly wrong */
 			g_assert (ht_remove (queue, elem->ptr));
-			g_ptr_array_remove_index_fast (array, i);
+			g_ptr_array_remove_index (array, i);
 			updated = TRUE;
 		}
 	}
 	return updated;
+}
+
+gboolean
+tracker_processing_queue_is_empty (TrackerProcessingQueue *queue)
+{
+	return g_hash_table_size (queue->priv->elem_ht) == 0;
+}
+
+void
+tracker_processing_queue_foreach (TrackerProcessingQueue *queue,
+                                  GFunc                   func,
+                                  gpointer                user_data)
+{
+	GPtrArray *arr = queue->priv->elem_array;
+	int i = 0;
+	for (i = 0; i < arr->len; i++) {
+		struct ElemPtr *elem = g_ptr_array_index (arr, i);
+
+		if (!elem->removed && elem->ptr)
+			func (elem->ptr, user_data);
+	}
 }
 
 /* Privates */
@@ -253,6 +274,14 @@ static gpointer pop_random (TrackerProcessingQueue *queue, gboolean remove)
 
 	if (*num_elems == 0)
 		return NULL;
+
+	/* This can happen when someone has removed an element by other means
+	 * than ppooing */
+	/* TODO: Fix a function for setting the next index */
+	if (queue->priv->next_random_idx >= *num_elems)
+		queue->priv->next_random_idx =
+		      g_random_int_range (0,
+			*num_elems-1);
 
 	/* Loop through elements until we find one which has
 	 * not been removed */
@@ -283,19 +312,15 @@ static gpointer pop_random (TrackerProcessingQueue *queue, gboolean remove)
 
 	g_assert (elem != NULL);
 
-	/* This is just a call to peek */
 	if (remove)
 		g_ptr_array_remove_index_fast (queue->priv->elem_array,
 		                               queue->priv->next_random_idx);
-	else {
+	else { /* This is just a call to peek */
 		return elem->ptr;
 	}
 
 	/* Also remove the element from the HT */
-	/* TODO: Ensure we remove the exact correct element, and not just ONE
-	 * of the elements with this key! */
-	g_hash_table_remove (queue->priv->elem_ht,
-			     queue->priv->key_func (elem->ptr));
+	ht_remove (queue, elem->ptr);
 
 	/* Set the index for the next pop */
 	if (*num_elems <= 1) {
@@ -378,7 +403,12 @@ ht_remove (TrackerProcessingQueue *queue,
 	for (i = 0; i < arr->len; i++) {
 		struct ElemPtr *eptr = g_ptr_array_index (arr, i);
 		if (elem == eptr->ptr) {
-			g_ptr_array_remove_index_fast (arr, i);
+			g_ptr_array_remove_index (arr, i);
+			if (arr->len == 0) {
+				g_hash_table_remove (queue->priv->elem_ht,
+				                queue->priv->key_func (elem));
+				g_ptr_array_unref (arr);
+			}
 			return TRUE;
 		}
 	}

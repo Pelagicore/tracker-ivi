@@ -411,8 +411,9 @@ static void test_processing_queue_reports_correct_length_fast_hinted (HintFixtur
 static void test_processing_queue_can_find_string_element (HintFixture *fix,
                                                     gconstpointer user_data)
 {
+	gchar *e = ((HintParameters *) user_data)->elements[2];
 	gboolean result = 
-	     tracker_processing_queue_contains (fix->queue, "_C_");
+	     tracker_processing_queue_contains (fix->queue, e);
 	g_assert (result == TRUE);
 }
 
@@ -447,12 +448,73 @@ static void test_processing_queue_can_remove_foreach (HintFixture *fix,
 	g_assert (tracker_processing_queue_pop (fix->queue) != file);
 }
 
+static void test_processing_queue_knows_when_empty (HintFixture *fix,
+                                                    gconstpointer user_data)
+{
+	g_assert (!tracker_processing_queue_is_empty (fix->queue));
+	tracker_processing_queue_pop (fix->queue);
+
+	g_assert (!tracker_processing_queue_is_empty (fix->queue));
+	tracker_processing_queue_pop (fix->queue);
+
+	g_assert (!tracker_processing_queue_is_empty (fix->queue));
+	tracker_processing_queue_pop (fix->queue);
+
+	g_assert (!tracker_processing_queue_is_empty (fix->queue));
+	tracker_processing_queue_pop (fix->queue);
+
+	g_assert (tracker_processing_queue_is_empty (fix->queue));
+}
+
+static void test_processing_queue_pop_mixed (HintFixture *fix,
+                                             gconstpointer user_data)
+{
+	g_assert (tracker_processing_queue_pop (fix->queue) != NULL);
+	g_assert (tracker_processing_queue_pop (fix->queue) != NULL);
+
+	tracker_processing_queue_prioritize (fix->queue, "/x");
+	g_assert (tracker_processing_queue_pop (fix->queue) != NULL);
+	tracker_processing_queue_prioritize (fix->queue, "/x");
+	g_assert (tracker_processing_queue_pop (fix->queue) != NULL);
+}
+
+static void test_processing_queue_pop_mixed2 (HintFixture *fix,
+                                              gconstpointer user_data)
+{
+	tracker_processing_queue_prioritize (fix->queue, "/x");
+	g_assert (tracker_processing_queue_pop (fix->queue) != NULL);
+
+	g_assert (tracker_processing_queue_pop (fix->queue) != NULL);
+	g_assert (tracker_processing_queue_pop (fix->queue) != NULL);
+	g_assert (tracker_processing_queue_pop (fix->queue) != NULL);
+
+}
+
+static void foreach_test (gpointer data, gpointer user_data) {
+	char *str_data = data;
+	str_data[0] = 'X';
+}
+static void test_processing_queue_can_use_foreach (HintFixture *fix,
+                                                   gconstpointer user_data)
+{
+	tracker_processing_queue_foreach (fix->queue, foreach_test, NULL);
+	gchar *peeked = tracker_processing_queue_peek (fix->queue);
+	g_assert (peeked[0] == 'X');
+}
+
 int
 main (int    argc,
       char **argv)
 {
 	g_test_init (&argc, &argv, NULL);
-	gpointer testelements[] = {"_A_", "_B_", "_C_", "_D_", "_AB_"};
+	gpointer testelements[] = {
+		g_strdup("_A_"),
+		g_strdup("_B_"),
+		g_strdup("_C_"),
+		g_strdup("_D_"),
+		g_strdup("_AB_")
+	};
+
 	gpointer testfiles[]    = {
 		g_file_new_for_uri ("file:///x/FILE1"),
 		g_file_new_for_uri ("file:///x/FILE2"),
@@ -516,6 +578,18 @@ main (int    argc,
 	g_test_add      ("/libtracker-miner/tracker-processing-queue/can-remove-foreach",
 	                 HintFixture, init_parameters (testfiles, 4), fixture_add_elements,
 	                 test_processing_queue_can_remove_foreach, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/knows-when-empty",
+	                 HintFixture, init_parameters (testfiles, 4), fixture_add_elements,
+	                 test_processing_queue_knows_when_empty, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/pop-mixed",
+	                 HintFixture, init_parameters (testfiles, 4), fixture_add_elements,
+	                 test_processing_queue_pop_mixed, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/pop-mixed2",
+	                 HintFixture, init_parameters (testfiles, 4), fixture_add_elements,
+	                 test_processing_queue_pop_mixed2, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/can-use-foreach",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_can_use_foreach, NULL);
 
 	return g_test_run ();
 }
