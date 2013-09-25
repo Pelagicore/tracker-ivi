@@ -30,6 +30,7 @@ static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 static gpointer pop_random (TrackerProcessingQueue *queue, gboolean remove);
 static gpointer pop_hinted (TrackerProcessingQueue *queue, gboolean remove);
 static gpointer tracker_processing_queue_get (TrackerProcessingQueue *queue, gboolean remove_element);
+static gboolean ht_remove (TrackerProcessingQueue *queue, gpointer elem);
 
 static void tracker_processing_queue_set_property (
 		GObject *queue, guint property_id, const GValue *value,
@@ -221,6 +222,29 @@ tracker_processing_queue_contains (TrackerProcessingQueue *queue,
 	return FALSE;
 }
 
+gboolean
+tracker_processing_queue_foreach_remove (TrackerProcessingQueue *queue,
+                                         GEqualFunc              compare_func,
+                                         gpointer                compare_user_data,
+                                         GDestroyNotify          destroy_notify)
+{
+	GPtrArray *array   = queue->priv->elem_array;
+	int        i       = 0;
+	gboolean   updated = FALSE;
+	for (i = 0; i < array->len; i++) {
+		struct ElemPtr *elem = g_ptr_array_index (array, i);
+		if (compare_func (elem->ptr, compare_user_data)) {
+			/* Assert that the element was removed from the HT.
+			 * if it was not, the ht and the array are out of sync
+			 * and something has gone horribly wrong */
+			g_assert (ht_remove (queue, elem->ptr));
+			g_ptr_array_remove_index_fast (array, i);
+			updated = TRUE;
+		}
+	}
+	return updated;
+}
+
 /* Privates */
 static gpointer pop_random (TrackerProcessingQueue *queue, gboolean remove)
 {
@@ -334,4 +358,30 @@ tracker_processing_queue_get (TrackerProcessingQueue *queue,
 	}
 
 	return retval;
+}
+
+/*
+ * Look up an element using the key_function, find the array it is stored in,
+ * and remove it from that list. Return TRUE if an element was found and
+ * removed, return FALSE otherwise
+ */
+static gboolean
+ht_remove (TrackerProcessingQueue *queue,
+           gpointer                elem)
+{
+	GPtrArray *arr = g_hash_table_lookup (queue->priv->elem_ht,
+	                                      queue->priv->key_func (elem));
+	int        i   = 0;
+	if (!arr)
+		return FALSE;
+
+	for (i = 0; i < arr->len; i++) {
+		struct ElemPtr *eptr = g_ptr_array_index (arr, i);
+		if (elem == eptr->ptr) {
+			g_ptr_array_remove_index_fast (arr, i);
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }

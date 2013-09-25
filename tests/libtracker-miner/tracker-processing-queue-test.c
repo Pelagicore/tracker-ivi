@@ -429,6 +429,24 @@ static void test_processing_queue_can_find_gfile_element (HintFixture *fix,
 	g_assert (result == TRUE); 
 }
 
+static void test_processing_queue_can_remove_foreach (HintFixture *fix,
+                                                      gconstpointer user_data)
+{
+	GFile *file = ((HintParameters *) user_data)->elements[2];
+	gboolean updated = 
+	    tracker_processing_queue_foreach_remove (fix->queue,
+                                        (GEqualFunc) g_file_equal,
+                                          (gpointer) file,
+                                                     NULL);
+	g_assert (updated);
+
+	/* Ensure the file requested for removal is gone */
+	g_assert (tracker_processing_queue_pop (fix->queue) != file);
+	g_assert (tracker_processing_queue_pop (fix->queue) != file);
+	g_assert (tracker_processing_queue_pop (fix->queue) != file);
+	g_assert (tracker_processing_queue_pop (fix->queue) != file);
+}
+
 int
 main (int    argc,
       char **argv)
@@ -495,6 +513,9 @@ main (int    argc,
 	g_test_add      ("/libtracker-miner/tracker-processing-queue/can-find-gfile-element",
 	                 HintFixture, init_parameters (testfiles, 4), fixture_add_elements,
 	                 test_processing_queue_can_find_gfile_element, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/can-remove-foreach",
+	                 HintFixture, init_parameters (testfiles, 4), fixture_add_elements,
+	                 test_processing_queue_can_remove_foreach, NULL);
 
 	return g_test_run ();
 }
