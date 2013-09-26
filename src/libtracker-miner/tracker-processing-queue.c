@@ -7,7 +7,8 @@ struct _TrackerProcessingQueuePrivate {
 	GPtrArray  *elem_array;
 	GHashTable *elem_ht;
 	GQueue     *hints;
-	gpointer  (*key_func)   (gpointer);
+	gpointer  (*key_func)     (gpointer);
+	void      (*destroy_func) (gpointer);
 	GEqualFunc  lookup_func;
 };
 
@@ -16,6 +17,7 @@ enum {
 
 	PROP_KEYING_FUNCTION,
 	PROP_LOOKUP_FUNCTION,
+	PROP_DESTROY_FUNCTION,
 
 	N_PROPERTIES
 };
@@ -66,6 +68,13 @@ tracker_processing_queue_class_init (TrackerProcessingQueueClass *klass)
 		                      G_PARAM_CONSTRUCT_ONLY |
 		                      G_PARAM_READWRITE);
 
+	obj_properties[PROP_DESTROY_FUNCTION] =
+		g_param_spec_pointer ("destroy-function",
+		                      "Destroy function",
+		                      "Set destroy function",
+		                      G_PARAM_CONSTRUCT_ONLY |
+		                      G_PARAM_READWRITE);
+
 	g_type_class_add_private (object_class, sizeof (TrackerProcessingQueuePrivate));
 
 	g_object_class_install_properties (object_class,
@@ -93,6 +102,9 @@ tracker_processing_queue_set_property (GObject      *object,
 	TrackerProcessingQueuePrivate *priv =
 	      TRACKER_PROCESSING_QUEUE_GET_PRIVATE (object);
 	switch (property_id) {
+		case (PROP_DESTROY_FUNCTION):
+			priv->destroy_func = g_value_get_pointer (value);
+			break;
 		case (PROP_KEYING_FUNCTION):
 			priv->key_func = g_value_get_pointer (value);
 			break;
@@ -187,16 +199,18 @@ tracker_processing_queue_get_length_fast (TrackerProcessingQueue *queue)
 TrackerProcessingQueue *
 tracker_processing_queue_new ()
 {
-	return tracker_processing_queue_new_full (identity, g_str_equal);
+	return tracker_processing_queue_new_full (identity, g_str_equal, g_free);
 }
 
 TrackerProcessingQueue *
 tracker_processing_queue_new_full (gpointer (*keying_func) (gpointer),
-                                   GEqualFunc lookup_func)
+                                   GEqualFunc lookup_func,
+				   void     (*destroy_func) (gpointer))
 {
 	return g_object_new (TRACKER_TYPE_PROCESSING_QUEUE,
 	                     "keying-function", keying_func,
 	                     "lookup-function", lookup_func,
+			     "destroy-function", destroy_func,
 	                     NULL);
 }
 
@@ -269,69 +283,72 @@ tracker_processing_queue_foreach (TrackerProcessingQueue *queue,
 /* Privates */
 static gpointer pop_random (TrackerProcessingQueue *queue, gboolean remove)
 {
-	struct ElemPtr *elem         = NULL;
-	int *num_elems = &queue->priv->elem_array->len;
+	struct ElemPtr  *container      = NULL;
+	       gpointer  elem           = NULL;
+	       int      *num_containers = &queue->priv->elem_array->len;
 
-	if (*num_elems == 0)
+	if (*num_containers == 0)
 		return NULL;
 
-	/* This can happen when someone has removed an element by other means
+	/* This can happen when someone has removed an containerent by other means
 	 * than ppooing */
 	/* TODO: Fix a function for setting the next index */
-	if (queue->priv->next_random_idx >= *num_elems)
+	if (queue->priv->next_random_idx >= *num_containers)
 		queue->priv->next_random_idx =
 		      g_random_int_range (0,
-			*num_elems-1);
+			*num_containers-1);
 
-	/* Loop through elements until we find one which has
+	/* Loop through containerents until we find one which has
 	 * not been removed */
-	while (*num_elems > 0) {
-		elem = g_ptr_array_index (queue->priv->elem_array,
+	while (*num_containers > 0) {
+		container = g_ptr_array_index (queue->priv->elem_array,
 					  queue->priv->next_random_idx);
-		/* If the element is flagged as removed, pick a
+		/* If the containerent is flagged as removed, pick a
 		 * new one */
-		if (elem->removed) {
-			/* Remove the flagged element from the array */
+		if (container->removed) {
+			/* Remove the flagged containerent from the array */
 			g_ptr_array_remove_index_fast (
 			      queue->priv->elem_array,
 			      queue->priv->next_random_idx);
 
-			if (*num_elems <= 1)
+			if (*num_containers <= 1)
 				queue->priv->next_random_idx = 0;
 			else {
 				queue->priv->next_random_idx =
 				      g_random_int_range (0,
-					*num_elems-1);
+					*num_containers-1);
 			}
 		} else {
-			/* If element if not removed, continue
+			/* If containerent if not removed, continue
 			 */
 			break;
 		}
 	}
 
-	g_assert (elem != NULL);
+	g_assert (container != NULL);
+	elem = container->ptr;
 
 	if (remove)
 		g_ptr_array_remove_index_fast (queue->priv->elem_array,
 		                               queue->priv->next_random_idx);
 	else { /* This is just a call to peek */
-		return elem->ptr;
+		return elem;
 	}
 
-	/* Also remove the element from the HT */
-	ht_remove (queue, elem->ptr);
+	/* Also remove the containerent from the HT. This frees the container*/
+	ht_remove (queue, elem);
+	container = NULL;
 
 	/* Set the index for the next pop */
-	if (*num_elems <= 1) {
+	if (*num_containers <= 1) {
 		queue->priv->next_random_idx = 0;
 	}
 	else {
 		queue->priv->next_random_idx =
-		      g_random_int_range (0, *num_elems-1);
+		      g_random_int_range (0, *num_containers-1);
 	}
 
-	return elem->ptr;
+	return elem;
 }
 
 static gpointer pop_hinted (TrackerProcessingQueue *queue, gboolean remove)
@@ -340,14 +357,18 @@ static gpointer pop_hinted (TrackerProcessingQueue *queue, gboolean remove)
 	GPtrArray *arr       = g_hash_table_lookup (queue->priv->elem_ht, hint);
 	gpointer innerElem   = NULL;
 	if (arr) {
-		struct ElemPtr *elem = NULL;
-		elem = g_ptr_array_remove_index_fast (arr, 0);
-		innerElem = elem->ptr;
+		struct ElemPtr *container = NULL;
+		container = g_ptr_array_remove_index_fast (arr, 0);
+		innerElem = container->ptr;
 
 		/* Remove this element  */
 		if (arr->len == 0)
 			g_hash_table_remove (queue->priv->elem_ht, hint);
-		elem->removed = TRUE;
+		/* We can't remove the container, since the array still has
+		 * a reference to it.. Flag it for removal and let the array
+		 * processing functions remove it when it is found instead
+		 */
+		container->removed = TRUE;
 		/* Check if this was the last element, if so, pop it from the
 		 * hints queue also */
 		if (!g_hash_table_contains (queue->priv->elem_ht, hint))
@@ -409,6 +430,8 @@ ht_remove (TrackerProcessingQueue *queue,
 				                queue->priv->key_func (elem));
 				g_ptr_array_unref (arr);
 			}
+			/* Free the container, but not the contained element */
+			g_free (eptr);
 			return TRUE;
 		}
 	}

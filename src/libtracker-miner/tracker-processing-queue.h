@@ -37,7 +37,8 @@ GType                   tracker_processing_queue_get_type        (void) G_GNUC_C
 
 TrackerProcessingQueue *tracker_processing_queue_new             (void);
 TrackerProcessingQueue *tracker_processing_queue_new_full        (gpointer (*keying_func) (gpointer),
-                                                                  GEqualFunc lookup_func);
+                                                                  GEqualFunc lookup_func,
+								  void     (*destroy_func) (gpointer));
 gpointer                tracker_processing_queue_pop             (TrackerProcessingQueue *queue);
 gpointer                tracker_processing_queue_peek            (TrackerProcessingQueue *queue);
 void                    tracker_processing_queue_add             (TrackerProcessingQueue *queue,

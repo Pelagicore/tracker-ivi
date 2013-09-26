@@ -71,11 +71,12 @@ static void test_processing_queue_pop_empty_random ()
  */
 static void test_processing_queue_pop_one_elem_random ()
 {
-	gchar *added_element = "Hello world!";
+	gchar *added_element = g_strdup("Hello world!");
 	gpointer elem = NULL;
 	TrackerProcessingQueue *queue = tracker_processing_queue_new ();
 	tracker_processing_queue_add (queue, added_element);
 	elem = tracker_processing_queue_pop (queue);
+	g_print ("Popped element: %s\n", elem);
 	g_assert (elem == added_element);
 }
 
@@ -153,7 +154,8 @@ static void test_processing_queue_can_prioritize_gfile ()
 	GFile *f3 = g_file_new_for_uri ("file:///z/FILE3");
 	TrackerProcessingQueue *queue = tracker_processing_queue_new_full (
 	                                                       keying_func,
-	                                                       g_str_equal);
+	                                                       g_str_equal,
+							       g_object_unref);
 	g_assert (queue != NULL);
 	tracker_processing_queue_add (queue, f1);
 	tracker_processing_queue_add (queue, f2);
@@ -177,7 +179,8 @@ static void test_processing_queue_can_handle_identical_keys ()
 
 	TrackerProcessingQueue *queue = tracker_processing_queue_new_full (
 	                                                       keying_func,
-	                                                       g_str_equal);
+	                                                       g_str_equal,
+							       g_object_unref);
 	g_assert (queue != NULL);
 	tracker_processing_queue_add (queue, f1);
 	tracker_processing_queue_add (queue, f2);
