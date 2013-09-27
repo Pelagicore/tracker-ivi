@@ -22,7 +22,7 @@ struct _TrackerProcessingQueue {
 
 typedef struct {
 	GObjectClass parent_class;
-} 
+}
 TrackerProcessingQueueClass;
 
 struct _TrackerProcessingQueueCriteria
@@ -33,29 +33,31 @@ struct _TrackerProcessingQueueCriteria
 	GList *node;
 };
 
-GType                   tracker_processing_queue_get_type        (void) G_GNUC_CONST;
+GType                   tracker_processing_queue_get_type          (void) G_GNUC_CONST;
 
-TrackerProcessingQueue *tracker_processing_queue_new             (void);
-TrackerProcessingQueue *tracker_processing_queue_new_full        (gpointer (*keying_func) (gpointer),
-                                                                  GEqualFunc lookup_func,
-								  void     (*destroy_func) (gpointer));
-gpointer                tracker_processing_queue_pop             (TrackerProcessingQueue *queue);
-gpointer                tracker_processing_queue_peek            (TrackerProcessingQueue *queue);
-void                    tracker_processing_queue_add             (TrackerProcessingQueue *queue,
-                                                                  gpointer                elem);
-void                    tracker_processing_queue_prioritize      (TrackerProcessingQueue *queue,
-                                                                  gpointer                hint);
-guint                   tracker_processing_queue_get_length      (TrackerProcessingQueue *queue);
-guint                   tracker_processing_queue_get_length_fast (TrackerProcessingQueue *queue);
-gboolean                tracker_processing_queue_contains        (TrackerProcessingQueue *queue,
-                                                                  gpointer                elem);
-gboolean                tracker_processing_queue_foreach_remove  (TrackerProcessingQueue *queue,
-                                                                  GEqualFunc              compare_func,
-                                                                  gpointer                compare_user_data,
-                                                                  GDestroyNotify          destroy_notify);
-gboolean                tracker_processing_queue_is_empty        (TrackerProcessingQueue *queue);
-void                    tracker_processing_queue_foreach         (TrackerProcessingQueue *queue,
-                                                                  GFunc                   func,
-                                                                  gpointer                user_data);
+TrackerProcessingQueue *tracker_processing_queue_new               (void);
+TrackerProcessingQueue *tracker_processing_queue_new_full          (gpointer (*keying_func) (gpointer),
+                                                                    GEqualFunc lookup_func,
+								    void     (*elem_destroy_func) (gpointer),
+								    void     (*key_destroy_func)  (gpointer));
+gpointer                tracker_processing_queue_pop               (TrackerProcessingQueue *queue);
+gpointer                tracker_processing_queue_peek              (TrackerProcessingQueue *queue);
+void                    tracker_processing_queue_add               (TrackerProcessingQueue *queue,
+                                                                    gpointer                elem);
+void                    tracker_processing_queue_prioritize        (TrackerProcessingQueue *queue,
+                                                                    gpointer                hint);
+guint                   tracker_processing_queue_get_length        (TrackerProcessingQueue *queue);
+guint                   tracker_processing_queue_get_length_fast   (TrackerProcessingQueue *queue);
+gboolean                tracker_processing_queue_contains          (TrackerProcessingQueue *queue,
+                                                                    gpointer                elem);
+gboolean                tracker_processing_queue_foreach_remove    (TrackerProcessingQueue *queue,
+                                                                    GEqualFunc              compare_func,
+                                                                    gpointer                compare_user_data,
+                                                                    GDestroyNotify          destroy_notify);
+gboolean                tracker_processing_queue_is_empty          (TrackerProcessingQueue *queue);
+void                    tracker_processing_queue_foreach           (TrackerProcessingQueue *queue,
+                                                                    GFunc                   func,
+                                                                    gpointer                user_data);
+void                    tracker_processing_queue_free_all_elements (TrackerProcessingQueue *queue);
 
 G_END_DECLS

@@ -53,6 +53,7 @@ static void test_processing_queue_can_create ()
 {
 	TrackerProcessingQueue *queue = tracker_processing_queue_new ();
 	g_assert (TRACKER_IS_PROCESSING_QUEUE (queue));
+	g_object_unref (queue);
 }
 
 /*
@@ -64,6 +65,7 @@ static void test_processing_queue_pop_empty_random ()
 	TrackerProcessingQueue *queue = tracker_processing_queue_new ();
 	elem = tracker_processing_queue_pop (queue);
 	g_assert (elem == NULL);
+	g_object_unref (queue);
 }
 
 /*
@@ -76,8 +78,9 @@ static void test_processing_queue_pop_one_elem_random ()
 	TrackerProcessingQueue *queue = tracker_processing_queue_new ();
 	tracker_processing_queue_add (queue, added_element);
 	elem = tracker_processing_queue_pop (queue);
-	g_print ("Popped element: %s\n", elem);
 	g_assert (elem == added_element);
+	g_free (added_element);
+	g_object_unref (queue);
 }
 
 /*
@@ -115,16 +118,27 @@ static void test_processing_queue_peeking_doesnt_modify_queue (HintFixture *fix,
  */
 static void test_processing_queue_popping_is_random ()
 {
+	guint NUM_ELEM = 10000;
+	gpointer elems[NUM_ELEM];
+
 	TrackerProcessingQueue *queue1 = tracker_processing_queue_new ();
 	TrackerProcessingQueue *queue2 = tracker_processing_queue_new ();
 	int i = 0;
-	for (i = 0; i < 100000; i++) {
-		gpointer elem = g_malloc0(1);
+	for (i = 0; i < NUM_ELEM; i++) {
+		char *elem = g_strdup_printf ("%d", i);
 		tracker_processing_queue_add (queue1, elem);
 		tracker_processing_queue_add (queue2, elem);
+		elems[i] = elem;
 	}
 	g_assert (tracker_processing_queue_pop (queue1) !=
 	          tracker_processing_queue_pop (queue2));
+
+	g_object_unref (queue1);
+	g_object_unref (queue2);
+
+	for (i = 0; i < NUM_ELEM; i++) {
+		g_free (elems[i]);
+	}
 }
 
 /*
@@ -145,7 +159,10 @@ static void test_processing_queue_can_prioritize_string (HintFixture *fix,
  * Verify that we can look up a GFile
  */
 static gpointer keying_func (gpointer key) {
-	return g_file_get_path (g_file_get_parent ( (GFile *)key));
+	GFile *parent = g_file_get_parent ( (GFile *)key);
+	gpointer retval = g_file_get_path (parent);
+	g_object_unref (parent);
+	return retval;
 }
 static void test_processing_queue_can_prioritize_gfile ()
 {
@@ -155,13 +172,16 @@ static void test_processing_queue_can_prioritize_gfile ()
 	TrackerProcessingQueue *queue = tracker_processing_queue_new_full (
 	                                                       keying_func,
 	                                                       g_str_equal,
-							       g_object_unref);
+	                                                       g_object_unref,
+	                                                       g_free);
 	g_assert (queue != NULL);
 	tracker_processing_queue_add (queue, f1);
 	tracker_processing_queue_add (queue, f2);
 	tracker_processing_queue_add (queue, f3);
 	tracker_processing_queue_prioritize (queue, "/x");
 	g_assert (tracker_processing_queue_pop (queue) == f1);
+	g_object_unref (f1);
+	tracker_processing_queue_free_all_elements (queue);
 }
 
 /*
@@ -180,7 +200,8 @@ static void test_processing_queue_can_handle_identical_keys ()
 	TrackerProcessingQueue *queue = tracker_processing_queue_new_full (
 	                                                       keying_func,
 	                                                       g_str_equal,
-							       g_object_unref);
+	                                                       g_object_unref,
+	                                                       g_free);
 	g_assert (queue != NULL);
 	tracker_processing_queue_add (queue, f1);
 	tracker_processing_queue_add (queue, f2);
@@ -433,22 +454,36 @@ static void test_processing_queue_can_find_gfile_element (HintFixture *fix,
 	g_assert (result == TRUE); 
 }
 
-static void test_processing_queue_can_remove_foreach (HintFixture *fix,
-                                                      gconstpointer user_data)
+static void test_processing_queue_can_remove_foreach ()
 {
-	GFile *file = ((HintParameters *) user_data)->elements[2];
+	GFile    *f1     = g_file_new_for_uri ("file:///x/FILE1");
+	GFile    *f2     = g_file_new_for_uri ("file:///x/FILE2");
+	GFile    *f3     = g_file_new_for_uri ("file:///x/FILE3");
+	GFile    *f4     = g_file_new_for_uri ("file:///x/FILE4");
+
+	TrackerProcessingQueue *queue = tracker_processing_queue_new_full (
+	                                                       keying_func,
+	                                                       g_str_equal,
+	                                                       g_object_unref,
+	                                                       g_free);
+
+	tracker_processing_queue_add (queue, f1);
+	tracker_processing_queue_add (queue, f2);
+	tracker_processing_queue_add (queue, f3);
+	tracker_processing_queue_add (queue, f4);
+
 	gboolean updated = 
-	    tracker_processing_queue_foreach_remove (fix->queue,
+	    tracker_processing_queue_foreach_remove (queue,
                                         (GEqualFunc) g_file_equal,
-                                          (gpointer) file,
+                                          (gpointer) f3,
                                                      NULL);
 	g_assert (updated);
 
 	/* Ensure the file requested for removal is gone */
-	g_assert (tracker_processing_queue_pop (fix->queue) != file);
-	g_assert (tracker_processing_queue_pop (fix->queue) != file);
-	g_assert (tracker_processing_queue_pop (fix->queue) != file);
-	g_assert (tracker_processing_queue_pop (fix->queue) != file);
+	g_assert (tracker_processing_queue_pop (queue) != f3);
+	g_assert (tracker_processing_queue_pop (queue) != f3);
+	g_assert (tracker_processing_queue_pop (queue) != f3);
+	g_assert (tracker_processing_queue_pop (queue) != f3);
 }
 
 static void test_processing_queue_knows_when_empty (HintFixture *fix,
@@ -497,6 +532,7 @@ static void foreach_test (gpointer data, gpointer user_data) {
 	char *str_data = data;
 	str_data[0] = 'X';
 }
+
 static void test_processing_queue_can_use_foreach (HintFixture *fix,
                                                    gconstpointer user_data)
 {
@@ -505,10 +541,17 @@ static void test_processing_queue_can_use_foreach (HintFixture *fix,
 	g_assert (peeked[0] == 'X');
 }
 
+static void test_processing_queue_can_unref (HintFixture *fix,
+                                             gconstpointer user_data)
+{
+	g_object_unref (fix->queue);
+}
+
 int
 main (int    argc,
       char **argv)
 {
+	int retval = 0;
 	g_test_init (&argc, &argv, NULL);
 	gpointer testelements[] = {
 		g_strdup("_A_"),
@@ -539,6 +582,8 @@ main (int    argc,
 	                 test_processing_queue_popping_is_random);
 	g_test_add_func ("/libtracker-miner/tracker-processing-queue/can-handle-identical-keys",
 	                 test_processing_queue_can_handle_identical_keys);
+	g_test_add_func ("/libtracker-miner/tracker-processing-queue/can-remove-foreach",
+	                 test_processing_queue_can_remove_foreach);
 	g_test_add      ("/libtracker-miner/tracker-processing-queue/peeking-and-popping-yields-same-elem",
 	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
 	                 test_processing_queue_peeking_and_popping_yields_the_same, NULL);
@@ -578,9 +623,6 @@ main (int    argc,
 	g_test_add      ("/libtracker-miner/tracker-processing-queue/can-find-gfile-element",
 	                 HintFixture, init_parameters (testfiles, 4), fixture_add_elements,
 	                 test_processing_queue_can_find_gfile_element, NULL);
-	g_test_add      ("/libtracker-miner/tracker-processing-queue/can-remove-foreach",
-	                 HintFixture, init_parameters (testfiles, 4), fixture_add_elements,
-	                 test_processing_queue_can_remove_foreach, NULL);
 	g_test_add      ("/libtracker-miner/tracker-processing-queue/knows-when-empty",
 	                 HintFixture, init_parameters (testfiles, 4), fixture_add_elements,
 	                 test_processing_queue_knows_when_empty, NULL);
@@ -593,6 +635,22 @@ main (int    argc,
 	g_test_add      ("/libtracker-miner/tracker-processing-queue/can-use-foreach",
 	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
 	                 test_processing_queue_can_use_foreach, NULL);
+	g_test_add      ("/libtracker-miner/tracker-processing-queue/can-unref",
+	                 HintFixture, init_parameters (testelements, 5), fixture_add_elements,
+	                 test_processing_queue_can_unref, NULL);
 
-	return g_test_run ();
+	retval = g_test_run ();
+
+	g_free (testelements[0]);
+	g_free (testelements[1]);
+	g_free (testelements[2]);
+	g_free (testelements[3]);
+	g_free (testelements[4]);
+
+	g_object_unref (testfiles[0]);
+	g_object_unref (testfiles[1]);
+	g_object_unref (testfiles[2]);
+	g_object_unref (testfiles[3]);
+
+	return retval;
 }

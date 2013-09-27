@@ -7,8 +7,9 @@ struct _TrackerProcessingQueuePrivate {
 	GPtrArray  *elem_array;
 	GHashTable *elem_ht;
 	GQueue     *hints;
-	gpointer  (*key_func)     (gpointer);
-	void      (*destroy_func) (gpointer);
+	gpointer  (*key_func)          (gpointer);
+	void      (*elem_destroy_func) (gpointer);
+	void      (*key_destroy_func)  (gpointer);
 	GEqualFunc  lookup_func;
 };
 
@@ -17,7 +18,8 @@ enum {
 
 	PROP_KEYING_FUNCTION,
 	PROP_LOOKUP_FUNCTION,
-	PROP_DESTROY_FUNCTION,
+	PROP_ELEMENT_DESTROY_FUNCTION,
+	PROP_KEY_DESTROY_FUNCTION,
 
 	N_PROPERTIES
 };
@@ -33,6 +35,7 @@ static gpointer pop_random (TrackerProcessingQueue *queue, gboolean remove);
 static gpointer pop_hinted (TrackerProcessingQueue *queue, gboolean remove);
 static gpointer tracker_processing_queue_get (TrackerProcessingQueue *queue, gboolean remove_element);
 static gboolean ht_remove (TrackerProcessingQueue *queue, gpointer elem);
+static void     tracker_processing_queue_finalize (GObject *object);
 
 static void tracker_processing_queue_set_property (
 		GObject *queue, guint property_id, const GValue *value,
@@ -44,8 +47,6 @@ static void tracker_processing_queue_get_property (
 G_DEFINE_TYPE (TrackerProcessingQueue, tracker_processing_queue, G_TYPE_OBJECT);
 #define TRACKER_PROCESSING_QUEUE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o),TRACKER_TYPE_PROCESSING_QUEUE, TrackerProcessingQueuePrivate))
 
-static gpointer identity (gpointer key) {return key;}
-
 static void
 tracker_processing_queue_class_init (TrackerProcessingQueueClass *klass)
 {
@@ -53,6 +54,7 @@ tracker_processing_queue_class_init (TrackerProcessingQueueClass *klass)
 
 	object_class->set_property = tracker_processing_queue_set_property;
 	object_class->get_property = tracker_processing_queue_get_property;
+	object_class->finalize     = tracker_processing_queue_finalize;
 
 	obj_properties[PROP_KEYING_FUNCTION] =
 		g_param_spec_pointer ("keying-function",
@@ -68,10 +70,17 @@ tracker_processing_queue_class_init (TrackerProcessingQueueClass *klass)
 		                      G_PARAM_CONSTRUCT_ONLY |
 		                      G_PARAM_READWRITE);
 
-	obj_properties[PROP_DESTROY_FUNCTION] =
-		g_param_spec_pointer ("destroy-function",
-		                      "Destroy function",
-		                      "Set destroy function",
+	obj_properties[PROP_ELEMENT_DESTROY_FUNCTION] =
+		g_param_spec_pointer ("element-destroy-function",
+		                      "Element destroy function",
+		                      "Set element destroy function",
+		                      G_PARAM_CONSTRUCT_ONLY |
+		                      G_PARAM_READWRITE);
+
+	obj_properties[PROP_KEY_DESTROY_FUNCTION] =
+		g_param_spec_pointer ("key-destroy-function",
+		                      "Key destroy function",
+		                      "Set key destroy function",
 		                      G_PARAM_CONSTRUCT_ONLY |
 		                      G_PARAM_READWRITE);
 
@@ -89,8 +98,31 @@ tracker_processing_queue_init (TrackerProcessingQueue *self)
 	self->priv->elem_array  = g_ptr_array_new ();
 	self->priv->elem_ht     = NULL;
 	self->priv->hints       = g_queue_new();
-	self->priv->key_func    = identity; /* This is really supposed to be set as a property */
+	self->priv->key_func    = NULL;
 	self->priv->lookup_func = NULL;
+}
+
+static void
+tracker_processing_queue_finalize (GObject *object)
+{
+	TrackerProcessingQueue *queue = TRACKER_PROCESSING_QUEUE (object);
+
+	GHashTableIter iter;
+	gpointer       key, value;
+	int            i = 0;
+	g_hash_table_iter_init (&iter, queue->priv->elem_ht);
+	while (g_hash_table_iter_next (&iter, &key, &value)) {
+		g_ptr_array_unref (value);
+	}
+
+	for (i = 0; i < queue->priv->elem_array->len; i++) {
+		g_free (g_ptr_array_remove_index (queue->priv->elem_array, i));
+	}
+
+	g_queue_free (queue->priv->hints);
+
+	G_OBJECT_CLASS (tracker_processing_queue_parent_class)->
+	        finalize (object);
 }
 
 static void
@@ -102,8 +134,11 @@ tracker_processing_queue_set_property (GObject      *object,
 	TrackerProcessingQueuePrivate *priv =
 	      TRACKER_PROCESSING_QUEUE_GET_PRIVATE (object);
 	switch (property_id) {
-		case (PROP_DESTROY_FUNCTION):
-			priv->destroy_func = g_value_get_pointer (value);
+		case (PROP_KEY_DESTROY_FUNCTION):
+			priv->key_destroy_func = g_value_get_pointer (value);
+			break;
+		case (PROP_ELEMENT_DESTROY_FUNCTION):
+			priv->elem_destroy_func = g_value_get_pointer (value);
 			break;
 		case (PROP_KEYING_FUNCTION):
 			priv->key_func = g_value_get_pointer (value);
@@ -113,7 +148,10 @@ tracker_processing_queue_set_property (GObject      *object,
 				g_free (priv->elem_ht);
 			priv->lookup_func = g_value_get_pointer (value);
 			priv->elem_ht =
-			     g_hash_table_new (g_str_hash, priv->lookup_func);
+			     g_hash_table_new_full (g_str_hash,
+			                            priv->lookup_func,
+			                            g_free,
+			                            NULL);
 			break;
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object,
@@ -141,8 +179,10 @@ tracker_processing_queue_add (TrackerProcessingQueue *queue,
 
 	g_ptr_array_add (queue->priv->elem_array, eptr);
 	dir = g_hash_table_lookup (queue->priv->elem_ht, key);
+
 	if (dir){
 		g_ptr_array_add (dir, eptr);
+		queue->priv->key_destroy_func (key);
 	} else {
 		dir = g_ptr_array_new ();
 		g_ptr_array_add (dir, eptr);
@@ -199,18 +239,24 @@ tracker_processing_queue_get_length_fast (TrackerProcessingQueue *queue)
 TrackerProcessingQueue *
 tracker_processing_queue_new ()
 {
-	return tracker_processing_queue_new_full (identity, g_str_equal, g_free);
+	return tracker_processing_queue_new_full (
+	                (gpointer (*) (gpointer)) g_strdup,
+	                g_str_equal,
+	                g_free,
+	                g_free);
 }
 
 TrackerProcessingQueue *
 tracker_processing_queue_new_full (gpointer (*keying_func) (gpointer),
                                    GEqualFunc lookup_func,
-				   void     (*destroy_func) (gpointer))
+				   void     (*elem_destroy_func) (gpointer),
+				   void     (*key_destroy_func)  (gpointer))
 {
 	return g_object_new (TRACKER_TYPE_PROCESSING_QUEUE,
-	                     "keying-function", keying_func,
-	                     "lookup-function", lookup_func,
-			     "destroy-function", destroy_func,
+	                     "keying-function",          keying_func,
+	                     "lookup-function",          lookup_func,
+			     "element-destroy-function", elem_destroy_func,
+			     "key-destroy-function",     key_destroy_func,
 	                     NULL);
 }
 
@@ -223,16 +269,21 @@ tracker_processing_queue_contains (TrackerProcessingQueue *queue,
 	guint      i   = 0;
 
 	/* Didn't find any elements with this key */
-	if (!arr)
+	if (!arr) {
+		queue->priv->key_destroy_func (key);
 		return FALSE;
+	}
 
 	/* Do a linear search through the array indicated by the lookup */
 	for (i = 0; i < arr->len; i++) {
 		struct ElemPtr *e = g_ptr_array_index (arr, i);
-		if (e->ptr == elem)
+		if (e->ptr == elem) {
+			queue->priv->key_destroy_func (key);
 			return TRUE;
+		}
 	}
 
+	queue->priv->key_destroy_func (key);
 	return FALSE;
 }
 
@@ -246,17 +297,41 @@ tracker_processing_queue_foreach_remove (TrackerProcessingQueue *queue,
 	int        i       = 0;
 	gboolean   updated = FALSE;
 	for (i = 0; i < array->len; i++) {
-		struct ElemPtr *elem = g_ptr_array_index (array, i);
-		if (compare_func (elem->ptr, compare_user_data)) {
+		struct ElemPtr *container = g_ptr_array_index (array, i);
+			gpointer elem      = NULL;
+		if (compare_func (container->ptr, compare_user_data)) {
 			/* Assert that the element was removed from the HT.
 			 * if it was not, the ht and the array are out of sync
 			 * and something has gone horribly wrong */
-			g_assert (ht_remove (queue, elem->ptr));
+			elem = container->ptr;
+			g_assert (ht_remove (queue, elem));
 			g_ptr_array_remove_index (array, i);
+			queue->priv->elem_destroy_func (elem);
 			updated = TRUE;
 		}
 	}
 	return updated;
+}
+
+void
+tracker_processing_queue_free_all_elements (TrackerProcessingQueue *queue)
+{
+	GPtrArray *array   = queue->priv->elem_array;
+	int        i       = 0;
+	for (i = 0; i < array->len; i++) {
+		struct ElemPtr *container = g_ptr_array_index (array, i);
+		       gpointer elem      = NULL;
+
+		elem = container->ptr;
+		if (!container->removed) {
+			g_assert (ht_remove (queue, elem));
+
+			/* ht_remove removed the container, but not the elem */
+			queue->priv->elem_destroy_func (elem);
+		}
+
+		g_ptr_array_remove_index (array, i);
+	}
 }
 
 gboolean
@@ -415,26 +490,31 @@ static gboolean
 ht_remove (TrackerProcessingQueue *queue,
            gpointer                elem)
 {
+	gpointer   key = queue->priv->key_func (elem);
 	GPtrArray *arr = g_hash_table_lookup (queue->priv->elem_ht,
-	                                      queue->priv->key_func (elem));
+	                                      key);
 	int        i   = 0;
-	if (!arr)
+	if (!arr) {
+		queue->priv->key_destroy_func (key);
 		return FALSE;
+	}
 
 	for (i = 0; i < arr->len; i++) {
-		struct ElemPtr *eptr = g_ptr_array_index (arr, i);
-		if (elem == eptr->ptr) {
+		struct ElemPtr *container = g_ptr_array_index (arr, i);
+		if (elem == container->ptr) {
 			g_ptr_array_remove_index (arr, i);
 			if (arr->len == 0) {
 				g_hash_table_remove (queue->priv->elem_ht,
-				                queue->priv->key_func (elem));
+				                     key);
 				g_ptr_array_unref (arr);
 			}
 			/* Free the container, but not the contained element */
-			g_free (eptr);
+			g_free (container);
+			queue->priv->key_destroy_func (key);
 			return TRUE;
 		}
 	}
 
+	queue->priv->key_destroy_func (key);
 	return FALSE;
 }

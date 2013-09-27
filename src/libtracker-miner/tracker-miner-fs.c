@@ -34,6 +34,7 @@
 #include "tracker-utils.h"
 #include "tracker-thumbnailer.h"
 #include "tracker-priority-queue.h"
+#include "tracker-processing-queue.h"
 #include "tracker-task-pool.h"
 #include "tracker-sparql-buffer.h"
 #include "tracker-file-notifier.h"
@@ -150,7 +151,7 @@ typedef struct {
 
 struct _TrackerMinerFSPrivate {
 	/* File queues for indexer */
-	TrackerPriorityQueue *items_created;
+	TrackerProcessingQueue *items_created;
 	TrackerPriorityQueue *items_updated;
 	TrackerPriorityQueue *items_deleted;
 	TrackerPriorityQueue *items_moved;
@@ -540,6 +541,10 @@ tracker_miner_fs_class_init (TrackerMinerFSClass *klass)
 	g_type_class_add_private (object_class, sizeof (TrackerMinerFSPrivate));
 }
 
+static gpointer keying_func (gpointer key) {
+	return g_file_get_path (g_file_get_parent ( (GFile *)key));
+}
+
 static void
 tracker_miner_fs_init (TrackerMinerFS *object)
 {
@@ -555,7 +560,7 @@ tracker_miner_fs_init (TrackerMinerFS *object)
 	priv->timer_stopped = TRUE;
 	priv->extraction_timer_stopped = TRUE;
 
-	priv->items_created = tracker_priority_queue_new ();
+	priv->items_created = tracker_processing_queue_new_full (keying_func, g_str_equal, g_object_unref, g_free);
 	priv->items_updated = tracker_priority_queue_new ();
 	priv->items_deleted = tracker_priority_queue_new ();
 	priv->items_moved = tracker_priority_queue_new ();
@@ -699,10 +704,11 @@ fs_finalize (GObject *object)
 	                                NULL);
 	tracker_priority_queue_unref (priv->items_updated);
 
-	tracker_priority_queue_foreach (priv->items_created,
-	                                (GFunc) g_object_unref,
-	                                NULL);
-	tracker_priority_queue_unref (priv->items_created);
+	tracker_processing_queue_foreach (priv->items_created,
+	                                 (GFunc) g_object_unref,
+	                                 NULL);
+
+	g_object_unref (priv->items_created);
 
 	tracker_priority_queue_foreach (priv->items_writeback,
 	                                (GFunc) item_writeback_data_free,
@@ -806,17 +812,15 @@ static void
 give_hint (TrackerMiner *miner,
            const gchar *hint)
 {
-	TrackerPriorityQueue *queue;
+	TrackerProcessingQueue *queue;
 	TrackerMinerFS       *fs;
 	guint                 length;
 	int                   numitems = 0;
 
 	fs = TRACKER_MINER_FS (miner);
 
-	numitems = tracker_priority_queue_prioritize (fs->priv->items_created,
-	                                              match_uri,
-                                                      -1000,
-                                                      (gpointer) hint);
+	tracker_processing_queue_prioritize (fs->priv->items_created,
+	                                     (gpointer *) hint);
 	if (numitems)
 		g_debug ("Prioritizing %d items\n", numitems);
 }
@@ -1815,11 +1819,11 @@ should_wait (TrackerMinerFS *fs,
 }
 
 static gboolean
-item_reenqueue_full (TrackerMinerFS       *fs,
-                     TrackerPriorityQueue *item_queue,
-                     GFile                *queue_file,
-                     gpointer              queue_data,
-                     gint                  priority)
+item_reenqueue_full (TrackerMinerFS         *fs,
+                     TrackerProcessingQueue *item_queue,
+                     GFile                  *queue_file,
+                     gpointer                queue_data,
+                     gint                    priority)
 {
 	gint reentry_counter;
 	gchar *uri;
@@ -1832,7 +1836,7 @@ item_reenqueue_full (TrackerMinerFS       *fs,
 		g_object_set_qdata (G_OBJECT (queue_file),
 		                    fs->priv->quark_reentry_counter,
 		                    GINT_TO_POINTER (reentry_counter + 1));
-		tracker_priority_queue_add (item_queue, queue_data, priority);
+		tracker_processing_queue_add (item_queue, queue_data);
 
 		should_wait = TRUE;
 	} else {
@@ -1854,10 +1858,10 @@ item_reenqueue_full (TrackerMinerFS       *fs,
 }
 
 static gboolean
-item_reenqueue (TrackerMinerFS       *fs,
-                TrackerPriorityQueue *item_queue,
-                GFile                *queue_file,
-                gint                  priority)
+item_reenqueue (TrackerMinerFS         *fs,
+                TrackerProcessingQueue *item_queue,
+                GFile                  *queue_file,
+                gint                    priority)
 {
 	return item_reenqueue_full (fs, item_queue, queue_file, queue_file, priority);
 }
@@ -1939,11 +1943,12 @@ item_queue_get_next_file (TrackerMinerFS  *fs,
 			trace_eq_push_head ("DELETED", queue_file, "Should wait");
 
 			/* Need to postpone event... */
-			if (item_reenqueue (fs, fs->priv->items_deleted, queue_file, priority - 1)) {
+/*			if (item_reenqueue (fs, fs->priv->items_deleted, queue_file, priority - 1)) {
 				return QUEUE_WAIT;
-			} else {
+			} else {*/
 				return QUEUE_NONE;
-			}
+				/*TODO: FIXME */
+/*			}*/
 		}
 
 		*file = queue_file;
@@ -1953,8 +1958,7 @@ item_queue_get_next_file (TrackerMinerFS  *fs,
 
 	/* Created items next */
 
-	queue_file = tracker_priority_queue_pop (fs->priv->items_created,
-	                                         &priority);
+	queue_file = tracker_processing_queue_pop (fs->priv->items_created);
 
 	if (queue_file) {
 		*source_file = NULL;
@@ -2037,11 +2041,12 @@ item_queue_get_next_file (TrackerMinerFS  *fs,
 			trace_eq_push_head ("UPDATED", queue_file, "Should wait");
 
 			/* Need to postpone event... */
-			if (item_reenqueue (fs, fs->priv->items_updated, queue_file, priority - 1)) {
+			/*if (item_reenqueue (fs, fs->priv->items_updated, queue_file, priority - 1)) {
 				return QUEUE_WAIT;
-			} else {
+			} else {*/
 				return QUEUE_NONE;
-			}
+				/*TODO: FIXME */
+			/*}*/
 		}
 
 		*priority_out = priority;
@@ -2083,11 +2088,12 @@ item_queue_get_next_file (TrackerMinerFS  *fs,
 			trace_eq_push_head_2 ("MOVED", data->source_file, data->file, "Should wait");
 
 			/* Need to postpone event... */
-			if (item_reenqueue_full (fs, fs->priv->items_moved, data->file, data, priority - 1)) {
+			/*if (item_reenqueue_full (fs, fs->priv->items_moved, data->file, data, priority - 1)) {
 				return QUEUE_WAIT;
-			} else {
+			} else {*/
+			/*TODO:FIXME*/
 				return QUEUE_NONE;
-			}
+			/*}*/
 		}
 
 		*file = g_object_ref (data->file);
@@ -2126,7 +2132,7 @@ item_queue_get_progress (TrackerMinerFS *fs,
 	guint items_total = 0;
 
 	items_to_process += tracker_priority_queue_get_length (fs->priv->items_deleted);
-	items_to_process += tracker_priority_queue_get_length (fs->priv->items_created);
+	items_to_process += tracker_processing_queue_get_length (fs->priv->items_created);
 	items_to_process += tracker_priority_queue_get_length (fs->priv->items_updated);
 	items_to_process += tracker_priority_queue_get_length (fs->priv->items_moved);
 	items_to_process += tracker_priority_queue_get_length (fs->priv->items_writeback);
@@ -2558,8 +2564,7 @@ check_item_queues (TrackerMinerFS *fs,
 		return TRUE;
 	case QUEUE_UPDATED:
 		/* No further updates after a previous created/updated event */
-		if (tracker_priority_queue_find (fs->priv->items_created, NULL,
-		                                 (GEqualFunc) g_file_equal, file) ||
+		if (tracker_processing_queue_contains (fs->priv->items_created, file) ||
 		    tracker_priority_queue_find (fs->priv->items_updated, NULL,
 		                                 (GEqualFunc) g_file_equal, file)) {
 			g_debug ("  Found previous unhandled CREATED/UPDATED event");
@@ -2588,7 +2593,7 @@ check_item_queues (TrackerMinerFS *fs,
 			g_debug ("  Deleting previous unhandled UPDATED event");
 		}
 
-		if (tracker_priority_queue_foreach_remove (fs->priv->items_created,
+		if (tracker_processing_queue_foreach_remove (fs->priv->items_created,
 		                                           (GEqualFunc) g_file_equal,
 		                                           file,
 		                                           (GDestroyNotify) g_object_unref)) {
@@ -2609,7 +2614,7 @@ check_item_queues (TrackerMinerFS *fs,
 		}
 
 		/* Kill any events on other_file (The dest one), since it will be rewritten anyway */
-		if (tracker_priority_queue_foreach_remove (fs->priv->items_created,
+		if (tracker_processing_queue_foreach_remove (fs->priv->items_created,
 		                                           (GEqualFunc) g_file_equal,
 		                                           other_file,
 		                                           (GDestroyNotify) g_object_unref)) {
@@ -2624,7 +2629,7 @@ check_item_queues (TrackerMinerFS *fs,
 		}
 
 		/* Now check file (Origin one) */
-		if (tracker_priority_queue_foreach_remove (fs->priv->items_created,
+		if (tracker_processing_queue_foreach_remove (fs->priv->items_created,
 		                                           (GEqualFunc) g_file_equal,
 		                                           file,
 		                                           (GDestroyNotify) g_object_unref)) {
@@ -2638,9 +2643,8 @@ check_item_queues (TrackerMinerFS *fs,
 			 */
 			g_debug ("  Found matching unhandled CREATED event "
 			         "for source file, merging both events together");
-			tracker_priority_queue_add (fs->priv->items_created,
-			                            g_object_ref (other_file),
-			                            G_PRIORITY_DEFAULT);
+			tracker_processing_queue_add (fs->priv->items_created,
+			                            g_object_ref (other_file));
 
 			return FALSE;
 		}
@@ -2675,9 +2679,8 @@ file_notifier_file_created (TrackerFileNotifier  *notifier,
 	TrackerMinerFS *fs = user_data;
 
 	if (check_item_queues (fs, QUEUE_CREATED, file, NULL)) {
-		tracker_priority_queue_add (fs->priv->items_created,
-		                            g_object_ref (file),
-		                            G_PRIORITY_DEFAULT);
+		tracker_processing_queue_add (fs->priv->items_created,
+		                            g_object_ref (file));
 		item_queue_handlers_set_up (fs);
 	}
 }
@@ -2968,7 +2971,7 @@ indexing_tree_directory_removed (TrackerIndexingTree *indexing_tree,
 	                                       (GEqualFunc) file_equal_or_descendant,
 	                                       directory,
 	                                       (GDestroyNotify) g_object_unref);
-	tracker_priority_queue_foreach_remove (priv->items_created,
+	tracker_processing_queue_foreach_remove (priv->items_created,
 	                                       (GEqualFunc) file_equal_or_descendant,
 	                                       directory,
 	                                       (GDestroyNotify) g_object_unref);
@@ -3737,7 +3740,7 @@ tracker_miner_fs_has_items_to_process (TrackerMinerFS *fs)
 
 	if (tracker_file_notifier_is_active (fs->priv->file_notifier) ||
 	    !tracker_priority_queue_is_empty (fs->priv->items_deleted) ||
-	    !tracker_priority_queue_is_empty (fs->priv->items_created) ||
+	    !tracker_processing_queue_is_empty (fs->priv->items_created) ||
 	    !tracker_priority_queue_is_empty (fs->priv->items_updated) ||
 	    !tracker_priority_queue_is_empty (fs->priv->items_moved) ||
 	    !tracker_priority_queue_is_empty (fs->priv->items_writeback)) {
@@ -3797,9 +3800,10 @@ void
 tracker_miner_fs_set_processing_queue_order (TrackerMinerFS *fs,
                                              TrackerProcessingQueueOrder order)
 {
-	g_return_if_fail (TRACKER_IS_MINER_FS (fs));
+/*	g_return_if_fail (TRACKER_IS_MINER_FS (fs));
 	tracker_priority_queue_set_processing_order (fs->priv->items_created,
 	                                             order);
+						     */
 }
 
 #ifdef EVENT_QUEUE_ENABLE_TRACE

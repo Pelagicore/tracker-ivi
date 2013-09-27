@@ -435,7 +435,6 @@ gpointer tracker_priority_queue_pop (TrackerPriorityQueue *queue,
                                      gint                 *priority_out)
 {
 	if (tracker_priority_queue_dec_num_remaining (queue) > 0) {
-		g_print ("Popping on demand!\n");
 		return tracker_priority_queue_pop_sequential (queue,
 		                                              priority_out);
 	} else {
