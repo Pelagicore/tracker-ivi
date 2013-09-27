@@ -157,8 +157,8 @@ enum {
 	RESUMED,
 	PROGRESS,
 	IGNORE_NEXT_UPDATE,
-	LAST_SIGNAL,
-	HINT
+	HINT,
+	LAST_SIGNAL
 };
 
 static guint signals[LAST_SIGNAL] = { 0 };
@@ -364,7 +364,8 @@ tracker_miner_class_init (TrackerMinerClass *klass)
 			      G_STRUCT_OFFSET (TrackerMinerClass, give_hint),
 			      NULL, NULL,
 			      tracker_marshal_VOID__STRING_STRING,
-			      G_TYPE_NONE, 1,
+			      G_TYPE_NONE, 2,
+			      G_TYPE_STRING,
 			      G_TYPE_STRING);
 
 	g_object_class_install_property (object_class,
